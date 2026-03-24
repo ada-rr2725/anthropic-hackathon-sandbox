@@ -1,43 +1,54 @@
-# Cascade — Policy Impact Analysis
+<p align="center">
+  <img src="public/favicon.svg" alt="Cascade logo" width="72" height="72" />
+</p>
 
-Describe any policy in plain English. Cascade uses Claude to reason about it and renders interactive visualisations across markets, demographics, voting blocs, and geography — in seconds.
+<h1 align="center">Cascade</h1>
 
-![Cascade demo](docs/screenshot.png)
+<p align="center">
+  Policy impact analysis, powered by Claude.<br/>
+  Describe any policy in plain English and get structured, interactive analysis across markets, demographics, voting blocs, and geography — in seconds.
+</p>
+
+<p align="center">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" alt="MIT License" /></a>
+  <img src="https://img.shields.io/badge/React-19-61dafb?style=flat-square&logo=react&logoColor=white" alt="React 19" />
+  <img src="https://img.shields.io/badge/Vite-8-646cff?style=flat-square&logo=vite&logoColor=white" alt="Vite" />
+  <img src="https://img.shields.io/badge/Claude-Haiku-d97706?style=flat-square" alt="Claude Haiku" />
+  <a href="https://github.com/ada-rr2725/anthropic-hackathon-sandbox/actions/workflows/lint.yml"><img src="https://img.shields.io/github/actions/workflow/status/ada-rr2725/anthropic-hackathon-sandbox/lint.yml?style=flat-square&label=lint" alt="Lint status" /></a>
+</p>
+
+<br/>
+
+> **Built at the Claude Hackathon @ Imperial College London.**
 
 ---
 
-## What it does
+<!-- Add a screenshot or GIF of the app here once deployed -->
+<!-- ![Cascade demo](docs/demo.gif) -->
 
-Type something like *"the UK raises the minimum wage to £15/hour"* and Cascade:
+## Features
 
-1. Sends the description to Claude, which reasons about the policy and returns a structured analysis
-2. Scores impacts across all 11 S&P market sectors, 15 demographic groups, 10 voting blocs, and up to 10 affected countries
-3. Renders the results as interactive charts you can explore immediately
-
-The analysis includes magnitude scores (1–5), direction, confidence levels, historical analogues, and a four-horizon timeline from immediate effects to long-term consequences.
-
----
-
-## Screenshots
-
-> Add screenshots here once deployed.
-
----
+- **Plain-English input** — describe any policy without structured forms or dropdowns
+- **Streaming analysis** — the UI updates live as Claude reasons through the policy
+- **Four analysis dimensions:**
+  - **Markets** — impact scores across all 11 S&P 500 sectors with direction, magnitude, and confidence
+  - **People** — effects on 15 demographic groups by income, age, geography, and occupation
+  - **Voters** — electoral alignment for 10 voting blocs with significance ratings
+  - **Geography** — interactive world map showing which countries are affected and why
+- **Timeline** — immediate, short-term, medium-term, and long-term projections
+- **Historical analogues** — comparable past policies for context
+- **No backend required** — runs entirely in the browser against the Anthropic API
 
 ## Tech stack
 
 | Layer | Technology |
 |---|---|
-| UI framework | React 19 + Vite |
+| UI | React 19 + Vite 8 |
 | Styling | Tailwind CSS v4 |
 | Charts | Plotly.js 2.27 (CDN) |
 | Maps | D3.js 7.9 + TopoJSON 3 (CDN) |
-| LLM | Anthropic Claude (direct browser API) |
+| LLM | Anthropic Claude Haiku (direct browser API) |
 | Fonts | DM Sans + DM Mono |
-
-No backend required. The app calls the Anthropic API directly from the browser.
-
----
 
 ## Getting started
 
@@ -46,26 +57,60 @@ No backend required. The app calls the Anthropic API directly from the browser.
 - Node.js 18+
 - An [Anthropic API key](https://console.anthropic.com/)
 
-### Setup
+### Installation
 
 ```bash
 git clone https://github.com/ada-rr2725/anthropic-hackathon-sandbox.git
 cd anthropic-hackathon-sandbox
 npm install
+```
+
+### Configuration
+
+```bash
 cp .env.example .env
-# Add your Anthropic API key to .env
+```
+
+Open `.env` and set your API key:
+
+```
+VITE_ANTHROPIC_API_KEY=sk-ant-...
+```
+
+### Run
+
+```bash
 npm run dev
 ```
 
-Open [http://localhost:5173](http://localhost:5173).
+Open [http://localhost:5173](http://localhost:5173) and try a prompt like:
 
-### Environment variables
+> *"The UK raises the national minimum wage to £15 per hour"*
 
-| Variable | Description |
-|---|---|
-| `VITE_ANTHROPIC_API_KEY` | Your Anthropic API key |
+## How it works
 
----
+```
+User prompt
+    │
+    ▼
+Anthropic API (claude-haiku-4-5, streaming)
+    │
+    ▼
+JSON parser  ──── fallback bracket-matching on parse failure
+    │
+    ▼
+App.jsx distributes parsed analysis to chart components
+    │
+    ├── MarketsChart   (Plotly horizontal bars)
+    ├── PeopleChart    (Plotly grouped bars)
+    ├── VotersChart    (Plotly lollipop chart)
+    ├── WorldMap       (D3 + TopoJSON choropleth)
+    └── TimelineView   (four-horizon text layout)
+```
+
+The system prompt in `src/prompts/understanding.js` enforces a strict JSON output schema — Claude is instructed to return only valid JSON with no markdown or preamble, scored across every dimension listed above.
+
+See [`docs/spec.md`](docs/spec.md) for the full product specification.
 
 ## Project structure
 
@@ -73,42 +118,30 @@ Open [http://localhost:5173](http://localhost:5173).
 src/
 ├── App.jsx                  # Root component and application state
 ├── components/
-│   ├── BackgroundMap.jsx    # Animated world map backdrop
+│   ├── BackgroundMap.jsx    # Animated world map backdrop (D3)
 │   ├── CascadeGraph.jsx     # Radial analysis-progress diagram
-│   ├── MarketsChart.jsx     # S&P sector impact bars
-│   ├── PeopleChart.jsx      # Demographic impact breakdown
-│   ├── VotersChart.jsx      # Voting bloc alignment chart
+│   ├── MarketsChart.jsx     # S&P sector impact bars (Plotly)
+│   ├── PeopleChart.jsx      # Demographic impact breakdown (Plotly)
+│   ├── VotersChart.jsx      # Voting bloc alignment chart (Plotly)
 │   ├── TimelineView.jsx     # Four-horizon timeline
-│   └── WorldMap.jsx         # Interactive geographic impact map
+│   └── WorldMap.jsx         # Interactive geographic impact map (D3)
 ├── services/
-│   ├── anthropic.js         # Streaming API client
+│   ├── anthropic.js         # Streaming SSE client
 │   ├── modelParser.js       # Safe JSON extraction from LLM output
 │   └── codeExecutor.js      # Sandboxed code runner
 └── prompts/
-    └── understanding.js     # Policy analysis system prompt
+    └── understanding.js     # Policy analysis system prompt + JSON schema
 ```
-
----
-
-## How the analysis works
-
-The policy text is sent to `claude-haiku-4-5` with a structured system prompt that enforces a JSON output schema. The response streams in and is parsed progressively — the UI updates as each section arrives. On parse failure, the raw response is recovered using bracket-matching as a fallback.
-
-See [`docs/spec.md`](docs/spec.md) for the full product specification.
-
----
 
 ## Development
 
 ```bash
-npm run dev      # start dev server
+npm run dev      # start dev server with HMR
 npm run build    # production build
-npm run preview  # preview production build
+npm run preview  # preview production build locally
 npm run lint     # run ESLint
 ```
 
----
-
 ## Licence
 
-MIT
+[MIT](LICENSE) — Robin Rai & Emircan Karaca, 2025
