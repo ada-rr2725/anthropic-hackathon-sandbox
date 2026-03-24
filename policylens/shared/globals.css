@@ -1,0 +1,89 @@
+@import "tailwindcss";
+
+/* design system tokens — used by tailwind and by d3/plotly via var() */
+:root {
+  --bg-0: #06090f;
+  --bg-1: #0b1018;
+  --bg-2: #101722;
+  --bg-3: #151e2d;
+  --bg-card: #0e1520;
+  --border-0: #1a2438;
+  --border-1: #243352;
+  --text-0: #eaf0f6;
+  --text-1: #a0b4c8;
+  --text-2: #5e7a96;
+  --text-3: #3a5068;
+  --red: #ff3355;
+  --red-dim: #ff335522;
+  --orange: #ff8a3a;
+  --orange-dim: #ff8a3a22;
+  --yellow: #ffc83a;
+  --yellow-dim: #ffc83a22;
+  --green: #30d98c;
+  --green-dim: #30d98c22;
+  --blue: #3a9eff;
+  --blue-dim: #3a9eff18;
+  --cyan: #22d3ee;
+  --cyan-dim: #22d3ee22;
+  --purple: #a78bfa;
+  --purple-dim: #a78bfa22;
+  --font-sans: 'Outfit', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+/* base reset */
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-sans);
+  background: var(--bg-0);
+  color: var(--text-0);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow: hidden;
+  height: 100vh;
+  width: 100vw;
+}
+
+#root {
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+}
+
+/* scrollbar */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-0); border-radius: 2px; }
+
+/* keyframes */
+@keyframes pulse-ring {
+  0% { transform: scale(1); opacity: 0.8; }
+  100% { transform: scale(3); opacity: 0; }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+/* utility classes for d3/plotly integration */
+.mono { font-family: var(--font-mono); }
+
+/* plotly overrides */
+.js-plotly-plot .plotly .hoverlayer .hovertext {
+  font-family: var(--font-sans) !important;
+}
