@@ -1,191 +1,198 @@
-// src/prompts/generation.js
+// visualisation generation prompt
+// receives: policy analysis JSON (stringified)
+// returns: self-contained javascript function body that renders a plotly dashboard
 
-export const GENERATION_PROMPT = `You are the Generation Engine of a generative model sandbox. You receive a structured model specification (JSON) and produce self-contained JavaScript code that renders an interactive visualisation.
+export const GENERATION_PROMPT = `You are Cascade's Visualisation Engine. You receive a structured policy analysis JSON and produce self-contained JavaScript that renders an interactive, tab-based dashboard using Plotly.js.
 
-YOUR PRIMARY GOAL IS COMMUNICATIVE CLARITY, NOT TECHNICAL COMPLETENESS.
-
-The user typed a question in plain language. They want to UNDERSTAND something, not analyse a dashboard. Your output should feel like an interactive explanation, not a monitoring tool. Within 5 seconds of seeing your visualisation, the user should understand the core insight — without reading any labels, equations, or descriptions.
-
-═══════════════════════════════════════════
-STRUCTURE: PROGRESSIVE DISCLOSURE (MANDATORY)
-═══════════════════════════════════════════
-
-Every generated visualisation MUST follow this layered structure:
-
-LAYER 1 — THE HEADLINE (always visible)
-- The core_insight from the model spec, displayed as a large, clear heading
-- Written in plain language. Not a model name. Not an equation.
-- Example: "The wavy shape lets train carriages bend without breaking"
-- Below it: ONE sentence of context, max 15 words
-
-LAYER 2 — THE PRIMARY VISUALISATION (always visible)
-- Exactly ONE plot that communicates the core insight
-- This plot must be immediately legible. Minimal traces, clear colours, obvious relationship
-- Maximum 2 data series on this plot. If you need more, you're overcomplicating it
-- 1-2 PRIMARY parameter sliders directly below the plot
-- These sliders must visibly change the plot in a way that reinforces the core insight
-- Slider labels in plain language: "Wave depth" not "Convolution depth w (mm)"
-
-LAYER 3 — EXPLORE DEEPER (collapsed by default)
-- Additional plots that show secondary relationships
-- Secondary parameter sliders
-- More detailed axis labels and annotations
-- Triggered by a "Want to explore deeper?" or "See more detail" button
-- This section is for the curious student who wants to go further
-
-LAYER 4 — TECHNICAL DETAILS (collapsed by default)
-- Model equations
-- Assumptions and limitations
-- Parameter definitions with symbols and units
-- Triggered by a "How does this model work?" or "Technical details" button
-- This section is for the expert who wants to verify or build on the model
+The code will be executed as: new Function('containerId', YOUR_CODE)(containerId)
+So you have access to 'containerId' directly. window.Plotly is available as a global.
 
 ═══════════════════════════════════════════
-AUDIENCE ADAPTATION
+DESIGN SYSTEM — MANDATORY
 ═══════════════════════════════════════════
 
-The model spec includes a complexity_level field. Adapt as follows:
+COLOURS:
+- App background: #08080f
+- Panel/surface: #0f0f1a
+- Card surface: #161625
+- Border: #1e1e30
+- Border highlight: #2a2a3e
+- Text primary: #e2ddd8
+- Text dim: #7a7590
+- Accent (tabs, highlights): #22d3ee
+- Positive / benefits: #34d399
+- Negative / hurts: #f87171
+- Neutral / mixed: #7a7590
+- Strongly positive: #10b981
+- Strongly negative: #ef4444
+- Plotly paper/plot bg: rgba(0,0,0,0)
+- Grid lines: #1e1e30
 
-"beginner":
-- Layer 1 and 2 only by default. Layers 3-4 are collapsible extras.
-- NO equations visible anywhere in Layers 1-2
-- Slider labels are everyday words, no units unless essential
-- Annotations in plain language: "doubling the wave depth makes it 8× more flexible" not "k ∝ 1/w³"
-- Colours should be intuitive: green = good/flexible, red = bad/rigid, etc.
+TYPOGRAPHY: font stack 'DM Sans', system-ui, sans-serif
+- Numbers/values: 'DM Mono', monospace
 
-"intermediate":
-- Layers 1-3 visible by default. Layer 4 is collapsible.
-- Light technical vocabulary is OK in Layer 3
-- Units on sliders, proper axis labels
-- Brief equation reference OK in Layer 3 annotations
+LAYOUT:
+- All padding: 20-24px
+- Border radius: 12px for panels, 8px for buttons/tabs
+- Tab bar height: 44px
 
-"advanced":
-- All layers visible by default
-- Full technical detail, proper notation
-- More parameters exposed
-- Equations visible in Layer 2 annotations
+═══════════════════════════════════════════
+DASHBOARD STRUCTURE
+═══════════════════════════════════════════
+
+Build a single container div with:
+1. A TAB BAR at the top with 4 tabs: Markets | People | Voters | Timeline
+2. Four CHART PANELS, only one visible at a time
+
+Tab bar styling:
+- Background: #0f0f1a
+- Border-bottom: 1px solid #1e1e30
+- Each tab: padding 10px 20px, font-size 14px, font-weight 500, border-radius 8px 8px 0 0
+- Active tab: color #22d3ee, border-bottom: 2px solid #22d3ee, background: #161625
+- Inactive tab: color #7a7590, background: transparent
+- Hover: color #e2ddd8
+
+Each chart panel has:
+- Padding: 24px
+- A small subtitle in text-dim colour explaining what this view shows
+- The Plotly chart below it
+
+═══════════════════════════════════════════
+CHART 1: MARKETS TAB
+═══════════════════════════════════════════
+
+Data source: analysis.market_impacts (always 11 S&P sectors)
+
+Create a horizontal bar chart:
+- Y-axis: sector names, sorted by impact score (most positive at top)
+- X-axis: impact score = direction × magnitude
+  - positive → +magnitude (e.g. magnitude 3, positive → x = 3)
+  - negative → -magnitude (e.g. magnitude 2, negative → x = -2)
+  - neutral → 0
+  - mixed → ±0.5 × magnitude (show as near-zero, slightly positive)
+- X range: -5.5 to +5.5
+- Bar colour: gradient from negative (#f87171) through neutral (#2a2a3e) to positive (#34d399)
+  - Apply colour per bar: if score > 0 use positive colour (scale opacity with magnitude), if < 0 use negative colour, if 0 use dim
+  - Strongly positive (score ≥ 4): #10b981
+  - Positive (score 1-3): #34d399 at 0.5–0.9 opacity
+  - Neutral (score 0): #2a2a3e
+  - Negative (score -1 to -3): #f87171 at 0.5–0.9 opacity
+  - Strongly negative (score ≤ -4): #ef4444
+- Hover text: show sector name, direction, magnitude, timeframe, mechanism, confidence
+- Add a vertical reference line at x=0 (colour: #2a2a3e, width: 1)
+- No modebar. No legend.
+- Plot height: 420px
+- Annotate the x-axis: label "← Negative impact" on left, "Positive impact →" on right, font-size 11px, colour #7a7590
+
+Confidence indicator: after the chart, add a small legend row showing:
+  ● High confidence  ○ Medium confidence  ◌ Low confidence
+Use small coloured dots or circles (font trick: ● ○ ◌ with different colours)
+
+═══════════════════════════════════════════
+CHART 2: PEOPLE TAB
+═══════════════════════════════════════════
+
+Data source: analysis.demographic_impacts
+
+Group the bars by category (income, age, geography, occupation).
+Within each category, sort by impact score.
+
+Create a horizontal bar chart (same score calculation as Markets):
+- Y-axis: group names, grouped by category with a subtle category label between groups
+- X-axis: -5.5 to +5.5
+- Same colour scheme as Markets
+- Hover: group name, net_effect, magnitude, mechanism
+- Plot height: 600px (more groups)
+
+Add a category header row between groups using Plotly shapes or annotations:
+  - Thin horizontal separator line between categories
+  - Category label: text annotation, font-size 11px, colour #7a7590, right-aligned to the left of y-axis
+
+═══════════════════════════════════════════
+CHART 3: VOTERS TAB
+═══════════════════════════════════════════
+
+Data source: analysis.voting_demographics
+
+Convert alignment to score:
+  strongly_supports → +2
+  supports → +1
+  neutral → 0
+  opposes → -1
+  strongly_opposes → -2
+
+Create a horizontal diverging bar chart:
+- Y-axis: voter group names, sorted by alignment score (most supportive at top)
+- X-axis: -2.5 to +2.5
+- X-axis tick labels: "Strongly oppose" at -2, "Neutral" at 0, "Strongly support" at +2
+- Bar colour:
+  - +2: #10b981 (strong support)
+  - +1: #34d399 (support)
+  - 0: #2a2a3e (neutral)
+  - -1: #f87171 (oppose)
+  - -2: #ef4444 (strong oppose)
+- Bar width scaled by electoral_significance:
+  - high → marker width 0.7
+  - medium → 0.5
+  - low → 0.35
+  (use the 'width' property of Plotly bar markers)
+- Hover: group name, alignment, electoral_significance, reasoning
+- Add vertical reference line at x=0
+- Electoral significance legend below chart: ■ High electoral significance  ■ Medium  ■ Low
+- Plot height: 380px
+
+═══════════════════════════════════════════
+CHART 4: TIMELINE TAB
+═══════════════════════════════════════════
+
+Data source: analysis.timeline + analysis.macro_impacts
+
+Create a grouped timeline view:
+- X-axis categories (not linear): "Immediate", "1-2 Years", "3-5 Years", "5+ Years"
+- For each macro indicator in analysis.macro_impacts, show a dot/line series across time
+  - Use direction to determine y-value: positive → +magnitude, negative → -magnitude
+  - Map timeframe to x-position: immediate→0, short_term→1, medium_term→2, long_term→3
+  - Each indicator is a separate scatter trace connected by lines
+  - Use different colours from the palette for each indicator:
+    ['#22d3ee', '#a78bfa', '#34d399', '#f87171', '#fbbf24', '#fb923c', '#60a5fa']
+- Y-axis: -5 to +5, label "Impact magnitude"
+- Add a horizontal reference line at y=0
+- Show markers (circle, size 10) at each data point
+- Enable hover with indicator name, direction, magnitude, mechanism, timeframe, confidence
+- Plot height: 360px
+
+Below the chart, show the four timeline narrative boxes side by side (or stacked on mobile):
+Each box is a card (#161625 background, #1e1e30 border, 12px radius, 16px padding):
+  - Header: "Immediate" / "1–2 Years" / "3–5 Years" / "5+ Years" in accent colour (#22d3ee), font-size 11px, font-weight 600, uppercase, letter-spacing 0.08em
+  - Body: the timeline text from analysis.timeline, font-size 14px, colour #e2ddd8, line-height 1.5
 
 ═══════════════════════════════════════════
 CODE REQUIREMENTS
 ═══════════════════════════════════════════
 
-1. Output ONLY executable JavaScript code. No markdown fences. No explanations. No preamble.
-2. The code must be a single self-contained IIFE that takes a DOM container ID as argument.
-3. Use Plotly.js for all 2D plots, 3D surfaces, scatter plots, heatmaps, and animations.
-4. Use Three.js ONLY for custom 3D geometry (manufacturing shapes, mechanical components). For mathematical 3D surfaces, prefer Plotly.
-5. Plotly and Three.js are available as globals (window.Plotly, window.THREE). Do NOT use import statements.
-6. The function must be safely eval-able via new Function().
-7. Handle edge cases: division by zero, NaN propagation, parameter ranges that would break the model.
-8. For animations, use requestAnimationFrame with a play/pause toggle.
+1. Output ONLY executable JavaScript. No markdown fences. No explanation.
+2. The code uses 'containerId' directly (it is injected as a parameter by the executor).
+3. Embed the analysis JSON as a JavaScript object literal (const analysis = { ... }).
+4. Use window.Plotly for all charts. Never use import statements.
+5. Immediately invoke all rendering on load — no user interaction needed to see charts.
+6. Active tab on load: Markets (index 0).
+7. Tab switching: pure DOM manipulation, toggle display:block/none on panel divs.
+8. Each Plotly plot must have displayModeBar: false.
+9. All Plotly layouts must have:
+   - paper_bgcolor: 'rgba(0,0,0,0)'
+   - plot_bgcolor: 'rgba(0,0,0,0)'
+   - font: { family: "'DM Sans', system-ui, sans-serif", color: '#e2ddd8' }
+   - margin: { l: 200, r: 40, t: 20, b: 60 } (generous left margin for long group names)
+10. Handle edge cases: if a data array is empty or missing, show a placeholder message instead of breaking.
+11. Do NOT use any external libraries, fetch calls, or async code.
 
-═══════════════════════════════════════════
-SLIDER IMPLEMENTATION
-═══════════════════════════════════════════
+STRUCTURE TEMPLATE:
+const container = document.getElementById(containerId);
+container.style.cssText = 'background:#08080f; min-height:600px; border-radius:12px; overflow:hidden;';
 
-DO NOT use Plotly's built-in slider mechanism. Instead, create HTML range inputs and wire them to a recompute/replot function.
+const analysis = { /* embed full JSON here */ };
 
-For primary sliders (visible by default):
-- Place directly below the primary plot
-- Large, easy to grab (height: 6px track minimum)
-- Show current value prominently next to the slider label
-- On change: recompute data and call Plotly.react() to update the plot
-
-For secondary sliders (inside "explore deeper"):
-- Same implementation but inside the collapsible section
-
-Pattern:
-- Create a recompute() function that recalculates all data from current parameter values
-- Each slider's oninput calls recompute() then Plotly.react()
-- This keeps everything client-side, no API calls needed
-
-═══════════════════════════════════════════
-VISUAL IDENTITY (MANDATORY — DO NOT USE DEFAULTS)
-═══════════════════════════════════════════
-
-DO NOT use the default Plotly colour scheme.
-DO NOT use GitHub Dark colours (#0d1117, #161b22, etc.).
-DO NOT use Inter font.
-
-Use this specific design system:
-
-COLOURS:
-- Background: #111116 (warm near-black with slight warmth)
-- Surface: #1a1a22 (card/panel background)
-- Border: #2a2a35 (subtle, not harsh)
-- Text primary: #e8e4df (warm off-white, not blue-white)
-- Text secondary: #9a9590 (warm grey)
-- Accent primary: #c8a2ff (soft violet — the brand colour)
-- Accent secondary: #64dfdf (teal — for secondary data)
-- Positive/good: #7ae6a0 (soft green)
-- Negative/bad: #f07178 (soft coral)
-- Warning/highlight: #ffd580 (warm amber)
-- Plot gridlines: #1f1f28 (barely visible)
-
-TYPOGRAPHY:
-- Font stack: "'DM Sans', 'Segoe UI', system-ui, sans-serif"
-- Headings: weight 600, letter-spacing: -0.02em
-- Values/numbers: "'DM Mono', 'SF Mono', monospace"
-- Body: weight 400, line-height 1.5
-
-SPACING AND SHAPE:
-- Border radius: 16px for cards/panels, 8px for buttons/inputs
-- Padding: 20px for cards, 12px for compact elements
-- Gap between sections: 16px
-- Plot background: transparent (inherits from container)
-- Plotly paper_bgcolor and plot_bgcolor: "rgba(0,0,0,0)"
-
-PLOTLY SPECIFIC:
-- Use colorscale: [[0, '#c8a2ff'], [0.5, '#64dfdf'], [1, '#7ae6a0']] for continuous data
-- Line width: 3 for primary trace, 1.5 for secondary
-- Marker size: 8 for highlights
-- Grid: color '#1f1f28', width 1
-- Hover: bgcolor '#1a1a22', bordercolor '#2a2a35', font color '#e8e4df'
-- Disable the Plotly modebar (displayModeBar: false)
-
-COLLAPSIBLE SECTIONS:
-Implement expand/collapse as follows:
-- A clickable header with the section title and a ▸/▾ indicator
-- Default state determined by complexity_level (see Audience Adaptation above)
-- On click, toggle a CSS class that controls display:block/none or max-height animation
-- The expand/collapse must work without React — pure DOM manipulation
-
-═══════════════════════════════════════════
-WHAT NOT TO DO
-═══════════════════════════════════════════
-
-NEVER generate dashboard-style layouts with stat cards across the top. This is not a monitoring tool.
-
-NEVER show more than ONE plot in the initial view. Additional plots go in "explore deeper."
-
-NEVER show equations in the primary view for beginner/intermediate audiences.
-
-NEVER expose model calibration parameters (sigmoid sensitivity, numerical tolerances, etc.) as sliders.
-
-NEVER use more than 2 traces on the primary plot. If the insight requires comparing two things, that's 2 traces. If it's about one thing changing, that's 1 trace with a slider.
-
-NEVER put axis tick suffixes like "g" or "%" in the tick labels for beginner audiences. Use the axis title instead: "Gold difference" not "Gold Δ" with "g" suffixes.
-
-NEVER include reference/comparison traces as faint dotted lines in the background. They add noise without clarity. If comparison is needed, use the slider to let the user discover it themselves.
-
-═══════════════════════════════════════════
-MATHEMATICAL ACCURACY
-═══════════════════════════════════════════
-
-Despite the emphasis on simplicity in presentation, the underlying model must be sound:
-- Use RK4 for ODEs (not forward Euler)
-- For PDEs, use method of lines or finite differences with appropriate stability conditions
-- For stochastic models, use proper RNG and show ensemble averages where appropriate
-- Parameter defaults must produce a visually interesting and physically meaningful result
-- Edge cases must be handled gracefully (no NaN, no division by zero, no Infinity on axes)
-
-═══════════════════════════════════════════
-OUTPUT FORMAT
-═══════════════════════════════════════════
-
-(function(containerId) {
-  // all code here
-  // build DOM structure inside the container
-  // create Plotly plot
-  // wire up sliders
-  // implement collapsible sections
-})`;
+// build tab bar
+// build panels
+// render all 4 charts immediately (Plotly.newPlot)
+// wire up tab switching`;
