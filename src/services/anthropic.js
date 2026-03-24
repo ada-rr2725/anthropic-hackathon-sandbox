@@ -1,15 +1,15 @@
 // anthropic streaming api wrapper
-// uses direct browser access — api key must be set in VITE_ANTHROPIC_API_KEY
+// uses direct browser access — api key read from param, then VITE_ANTHROPIC_API_KEY env var
 
 const API_URL = 'https://api.anthropic.com/v1/messages';
 
-export async function streamMessage({ system, userMessage, onChunk })
+export async function streamMessage({ system, userMessage, onChunk, apiKey: keyParam })
 {
-    const apiKey = import.meta.env.VITE_ANTHROPIC_API_KEY;
+    const apiKey = keyParam || import.meta.env.VITE_ANTHROPIC_API_KEY;
 
     if (!apiKey || apiKey === 'your-key-here')
     {
-        throw new Error('No API key found. Copy .env.example to .env.local and add your VITE_ANTHROPIC_API_KEY.');
+        throw new Error('No API key found. Add your Anthropic API key to continue.');
     }
 
     const response = await fetch(API_URL, {
@@ -32,7 +32,8 @@ export async function streamMessage({ system, userMessage, onChunk })
     if (!response.ok)
     {
         let message = `API error ${response.status}`;
-        try { const body = await response.json(); message = body.error?.message || message; } catch {}
+        try { const body = await response.json(); message = body.error?.message || message; }
+        catch (_) { /* json parse failed — use status message */ }
         throw new Error(message);
     }
 
@@ -65,7 +66,7 @@ export async function streamMessage({ system, userMessage, onChunk })
                     onChunk?.(parsed.delta.text, fullText);
                 }
             }
-            catch { /* malformed chunk — skip */ }
+            catch (_) { /* malformed chunk — skip */ }
         }
     }
 

@@ -2,33 +2,34 @@
 
 ## Project overview
 
-This is a generative model sandbox — a web app that takes natural language descriptions of any system/phenomenon and generates interactive, parameterised visualisations. The user does not need to know what model is appropriate; the system reasons about the problem and builds the right model.
+Cascade is a policy impact analysis tool. The user describes any policy in plain English; the app sends it to Claude, receives a structured JSON analysis, and renders interactive charts across four dimensions: financial markets, demographics, voting blocs, and geography.
 
-Read `hackathon-spec.md` for the full specification before doing any work.
-
-## Critical rules
-
-1. **Follow the implementation stages in hackathon-spec.md in order.** Do not skip ahead. Each stage has an exit criterion — verify it is met before proceeding.
-2. **Do not modify the system prompts** in `src/prompts/` without explicit instruction. They are carefully crafted and tested.
-3. **No npm packages beyond Vite + React + Tailwind.** Plotly.js and Three.js are loaded via CDN in `index.html` and available as `window.Plotly` and `window.THREE`.
-4. **All components are functional components with hooks.** No class components.
-5. **Use Tailwind utility classes for all styling.** No separate CSS modules. Only `globals.css` for base Tailwind config and CSS custom properties.
-6. **API key is read from `VITE_ANTHROPIC_API_KEY` environment variable.** Never hardcode it.
-7. **The visualisation container must have a stable DOM ID** (`model-viz-container`) that persists across React re-renders. Use a ref, not a key that changes.
+Full product specification: [`docs/spec.md`](docs/spec.md).
 
 ## Architecture
 
-Two-call pipeline:
-- **Call 1 (Understanding Engine):** user prompt → structured JSON (model spec, parameters, reasoning)
-- **Call 2 (Generation Engine):** model spec JSON → self-contained JavaScript function that renders interactive Plotly/Three.js visualisation
+Single-call pipeline:
 
-Both system prompts live in `src/prompts/`. The JSON output from Call 1 is the contract between the understanding and generation engines.
+1. User submits a policy description
+2. `streamMessage` (in `src/services/anthropic.js`) streams the response from `claude-haiku-4-5`
+3. `parsePolicyAnalysis` (in `src/services/modelParser.js`) extracts the JSON from the streamed text
+4. `App.jsx` distributes the parsed analysis to the chart components
+
+The system prompt lives in `src/prompts/understanding.js`. It enforces a strict JSON schema — do not modify it without explicit instruction; it is carefully calibrated.
+
+## Critical rules
+
+1. **Do not modify `src/prompts/understanding.js`** without explicit instruction.
+2. **No npm packages beyond Vite + React + Tailwind.** Plotly.js, D3.js, and TopoJSON are loaded via CDN in `index.html`.
+3. **All components are functional components with hooks.** No class components.
+4. **Use Tailwind utility classes for styling.** No separate CSS modules. Only `src/index.css` for base styles and CSS custom properties.
+5. **API key is read from `VITE_ANTHROPIC_API_KEY`.** Never hardcode it.
 
 ## Code style
 
 - Lowercase comments
-- Allman-style braces for any non-JSX code (utility functions, service files)
-- British English in user-facing copy (e.g. "visualisation" not "visualization")
+- Allman-style braces for non-JSX code (utility functions, service files)
+- British English in user-facing copy ("visualisation", "analyse", "colour")
 - Direct, slightly informal tone in UI copy
 - No em dashes in UI text
 
@@ -38,39 +39,24 @@ Both system prompts live in `src/prompts/`. The JSON output from Call 1 is the c
 src/
 ├── App.jsx
 ├── components/
-│   ├── PromptInput.jsx
-│   ├── ThinkingStream.jsx
-│   ├── ParameterForm.jsx
-│   ├── ModelCard.jsx
-│   ├── VisualisationContainer.jsx
-│   ├── ControlPanel.jsx
-│   ├── ErrorState.jsx
-│   └── Header.jsx
+│   ├── BackgroundMap.jsx
+│   ├── CascadeGraph.jsx
+│   ├── MarketsChart.jsx
+│   ├── PeopleChart.jsx
+│   ├── VotersChart.jsx
+│   ├── TimelineView.jsx
+│   └── WorldMap.jsx
 ├── services/
 │   ├── anthropic.js
 │   ├── codeExecutor.js
 │   └── modelParser.js
 ├── prompts/
-│   ├── understanding.js
-│   ├── generation.js
-│   └── recovery.js
-├── styles/
-│   └── globals.css
+│   └── understanding.js
 └── main.jsx
 ```
 
-## Testing approach
-
-- After implementing each component, verify it renders correctly with mock data before wiring to real API calls
-- After Stage 3, run these smoke test prompts end-to-end:
-  1. "how does compound interest grow over 30 years"
-  2. "show me how option prices change with volatility and time to expiry"
-  3. "simulate a predator-prey ecosystem"
-- If any smoke test fails, fix it before moving to Stage 4
-
 ## When uncertain
 
-- If a design decision is ambiguous, prefer the simpler option
-- If a component's props are unclear, check `hackathon-spec.md` section 5 and the data flow described in section 8
-- If generated visualisation code fails, check the error recovery flow in section 8.2 of the spec
+- Prefer the simpler option when a design decision is ambiguous
+- Check `docs/spec.md` for the intended data shape and component props
 - Do not introduce new dependencies or patterns not described in the spec without asking first

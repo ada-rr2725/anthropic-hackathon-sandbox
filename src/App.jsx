@@ -9,6 +9,7 @@ import MarketsChart from './components/MarketsChart'
 import PeopleChart from './components/PeopleChart'
 import VotersChart from './components/VotersChart'
 import TimelineView from './components/TimelineView'
+import ApiKeyGate from './components/ApiKeyGate'
 
 const EXAMPLES = [
   'The US imposes a 25% blanket tariff on all Chinese imports',
@@ -62,8 +63,17 @@ const GLASS = {
   boxShadow: '0 8px 40px rgba(0,0,0,0.10), 0 1px 0 rgba(255,255,255,0.8) inset',
 }
 
+// resolve api key: env var takes priority, then localstorage
+function resolveInitialKey()
+{
+  const env = import.meta.env.VITE_ANTHROPIC_API_KEY
+  if (env && env !== 'your-key-here') return env
+  return localStorage.getItem('cascade_api_key') || ''
+}
+
 export default function App()
 {
+  const [apiKey, setApiKey]       = useState(resolveInitialKey)
   const [phase, setPhase]         = useState('idle')
   const [policy, setPolicy]       = useState('')
   const [analysis, setAnalysis]   = useState(null)
@@ -72,7 +82,6 @@ export default function App()
   const [statusMsg, setStatusMsg]       = useState('')
   const [leftOpen, setLeftOpen]         = useState(true)
   const [rightOpen, setRightOpen]       = useState(true)
-  const [streamedText, setStreamedText] = useState('')
 
   useEffect(() =>
   {
@@ -92,16 +101,15 @@ export default function App()
     setError(null)
     setActiveTab('markets')
     setStatusMsg('Identifying policy mechanisms...')
-    setStreamedText('')
 
     try
     {
       const text = await streamMessage({
         system: POLICY_ANALYSIS_PROMPT,
         userMessage: trimmed,
+        apiKey,
         onChunk: (_, full) =>
         {
-          setStreamedText(full)
           if (full.includes('"voting_demographics"'))      setStatusMsg('Mapping electoral implications...')
           else if (full.includes('"demographic_impacts"')) setStatusMsg('Assessing demographic effects...')
           else if (full.includes('"market_impacts"'))      setStatusMsg('Mapping market exposure...')
@@ -131,6 +139,11 @@ export default function App()
   return (
     <div style={{ minHeight: '100svh', fontFamily: "'DM Sans', system-ui, sans-serif", color: '#1a1612', display: 'flex', flexDirection: 'column' }}>
 
+      {/* ── api key gate ── */}
+      {!apiKey && <ApiKeyGate onKeySubmit={setApiKey} />}
+
+      {apiKey && <>
+
       {/* ── sticky header ── */}
       <header style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -147,14 +160,23 @@ export default function App()
             Policy Impact Analysis
           </span>
         </div>
-        {phase === 'done' && (
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          {phase === 'done' && (
+            <button
+              onClick={handleReset}
+              style={{ background: 'none', border: '1px solid #e8e4dc', borderRadius: '8px', padding: '7px 18px', fontSize: '13px', color: '#7a7268', cursor: 'pointer', fontFamily: 'inherit' }}
+            >
+              ← New policy
+            </button>
+          )}
           <button
-            onClick={handleReset}
-            style={{ background: 'none', border: '1px solid #e8e4dc', borderRadius: '8px', padding: '7px 18px', fontSize: '13px', color: '#7a7268', cursor: 'pointer', fontFamily: 'inherit' }}
+            onClick={() => { localStorage.removeItem('cascade_api_key'); setApiKey('') }}
+            title="Change API key"
+            style={{ background: 'none', border: '1px solid #e8e4dc', borderRadius: '8px', padding: '7px 12px', fontSize: '12px', color: '#c8c2b8', cursor: 'pointer', fontFamily: 'inherit' }}
           >
-            ← New policy
+            API key
           </button>
-        )}
+        </div>
       </header>
 
       {/* ── idle / error ── */}
@@ -614,6 +636,7 @@ export default function App()
         </div>
       )}
 
+      </>}
     </div>
   )
 }
