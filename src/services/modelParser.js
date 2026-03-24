@@ -28,5 +28,6 @@ export function parsePolicyAnalysis(text)
         catch { /* fall through */ }
     }
 
-    throw new Error('Could not parse policy analysis — the model returned malformed JSON.');
+    console.error('[modelParser] raw response was:', text);
+    throw new Error('Could not parse policy analysis — the model returned malformed JSON. Check console for raw output.');
 }

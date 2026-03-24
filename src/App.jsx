@@ -3,6 +3,7 @@ import { streamMessage } from './services/anthropic'
 import { parsePolicyAnalysis } from './services/modelParser'
 import { POLICY_ANALYSIS_PROMPT } from './prompts/understanding'
 import WorldMap from './components/WorldMap'
+import BackgroundMap from './components/BackgroundMap'
 import MarketsChart from './components/MarketsChart'
 import PeopleChart from './components/PeopleChart'
 import VotersChart from './components/VotersChart'
@@ -128,7 +129,9 @@ export default function App()
 
         {/* ── idle / error ── */}
         {(phase === 'idle' || phase === 'error') && (
-          <>
+          <div style={{ position: 'relative' }}>
+            <BackgroundMap />
+            <div style={{ position: 'relative', zIndex: 1 }}>
             {/* hero */}
             <div style={{ marginBottom: '48px' }}>
               <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: '#fff7ed', border: '1px solid #fed7aa', borderRadius: '100px', padding: '5px 14px', fontSize: '12px', color: '#f97316', fontWeight: 600, marginBottom: '20px', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
@@ -200,7 +203,8 @@ export default function App()
                 <strong>Error:</strong> {error}
               </div>
             )}
-          </>
+            </div>
+          </div>
         )}
 
         {/* ── analyzing ── */}
