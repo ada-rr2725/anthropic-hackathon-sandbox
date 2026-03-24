@@ -27,10 +27,14 @@ const CHART_TABS = [
 ]
 
 const ANIM = `
-  @keyframes csc-spin { to { transform: rotate(360deg); } }
-  @keyframes csc-pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
-  @keyframes csc-fadein { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:none} }
-  .pill-btn:hover { background:#fff0e8 !important; border-color:#f97316 !important; color:#f97316 !important; }
+  @keyframes csc-spin    { to { transform: rotate(360deg); } }
+  @keyframes csc-pulse   { 0%,100%{opacity:1} 50%{opacity:.4} }
+  @keyframes csc-fadein  { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:none} }
+  @keyframes csc-flow    { to { stroke-dashoffset: -40; } }
+  @keyframes csc-pop     { 0%{transform:scale(0.6);opacity:0} 60%{transform:scale(1.1)} 100%{transform:scale(1);opacity:1} }
+  @keyframes csc-glow-o  { 0%,100%{filter:drop-shadow(0 0 4px #f9731660)} 50%{filter:drop-shadow(0 0 14px #f97316cc)} }
+  @keyframes csc-glow-t  { 0%,100%{filter:drop-shadow(0 0 4px #0d948860)} 50%{filter:drop-shadow(0 0 14px #0d9488cc)} }
+  .pill-btn:hover  { background:#fff0e8 !important; border-color:#f97316 !important; color:#f97316 !important; }
   .submit-btn:hover { box-shadow: 0 6px 28px rgba(249,115,22,0.45) !important; transform: translateY(-1px); }
   .submit-btn:active { transform: scale(0.98) !important; }
   .chart-tab:hover { color: #1a1612 !important; }
@@ -38,6 +42,16 @@ const ANIM = `
   .panel-scroll::-webkit-scrollbar-track { background: transparent; }
   .panel-scroll::-webkit-scrollbar-thumb { background: #e8e4dc; border-radius: 2px; }
 `
+
+// which spokes are active based on status message
+function spokesFromStatus(msg)
+{
+  if (msg.includes('geographic') || msg.includes('ripple'))   return ['geo']
+  if (msg.includes('market'))                                  return ['geo', 'markets']
+  if (msg.includes('demographic') || msg.includes('people'))  return ['geo', 'markets', 'people']
+  if (msg.includes('electoral') || msg.includes('voting'))    return ['geo', 'markets', 'people', 'voters']
+  return []
+}
 
 const GLASS = {
   background: 'rgba(255,255,255,0.92)',
@@ -58,6 +72,7 @@ export default function App()
   const [statusMsg, setStatusMsg]       = useState('')
   const [leftOpen, setLeftOpen]         = useState(true)
   const [rightOpen, setRightOpen]       = useState(true)
+  const [streamedText, setStreamedText] = useState('')
 
   useEffect(() =>
   {
@@ -77,6 +92,7 @@ export default function App()
     setError(null)
     setActiveTab('markets')
     setStatusMsg('Identifying policy mechanisms...')
+    setStreamedText('')
 
     try
     {
@@ -85,6 +101,7 @@ export default function App()
         userMessage: trimmed,
         onChunk: (_, full) =>
         {
+          setStreamedText(full)
           if (full.includes('"voting_demographics"'))      setStatusMsg('Mapping electoral implications...')
           else if (full.includes('"demographic_impacts"')) setStatusMsg('Assessing demographic effects...')
           else if (full.includes('"market_impacts"'))      setStatusMsg('Mapping market exposure...')
@@ -224,16 +241,121 @@ export default function App()
       )}
 
       {/* ── analyzing ── */}
-      {phase === 'analyzing' && (
-        <div style={{ flex: 1, background: '#f5f5f0', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '40px' }}>
-          <div style={{ ...GLASS, padding: '12px 24px', fontSize: '14px', color: '#7a7268', marginBottom: '40px', maxWidth: '600px' }}>
-            {policy}
+      {phase === 'analyzing' && (() => {
+        const active = spokesFromStatus(statusMsg)
+        const cx = 200, cy = 200, r = 120
+        const spokes = [
+          { id: 'geo',     label: 'Geography',  angle: -90,  icon: '🌍', col: '#0d9488' },
+          { id: 'markets', label: 'Markets',     angle: 0,    icon: '📈', col: '#f97316' },
+          { id: 'people',  label: 'People',      angle: 90,   icon: '👥', col: '#0d9488' },
+          { id: 'voters',  label: 'Voters',      angle: 180,  icon: '🗳', col: '#f97316' },
+        ]
+        return (
+          <div style={{ flex: 1, background: '#f5f5f0', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '32px', padding: '40px' }}>
+
+            {/* radial diagram */}
+            <svg width={400} height={400} viewBox="0 0 400 400" style={{ overflow: 'visible' }}>
+              <defs>
+                <radialGradient id="centreGrad" cx="50%" cy="50%" r="50%">
+                  <stop offset="0%" stopColor="#fff7ed" />
+                  <stop offset="100%" stopColor="#ffedd5" />
+                </radialGradient>
+                <marker id="arrowO" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+                  <path d="M0,0 L6,3 L0,6 Z" fill="#f97316" opacity="0.7" />
+                </marker>
+                <marker id="arrowT" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+                  <path d="M0,0 L6,3 L0,6 Z" fill="#0d9488" opacity="0.7" />
+                </marker>
+              </defs>
+
+              {/* spoke lines */}
+              {spokes.map(({ id, angle, col }) => {
+                const rad  = angle * Math.PI / 180
+                const x1   = cx + 44 * Math.cos(rad)
+                const y1   = cy + 44 * Math.sin(rad)
+                const x2   = cx + (r - 32) * Math.cos(rad)
+                const y2   = cy + (r - 32) * Math.sin(rad)
+                const on   = active.includes(id)
+                const mark = col === '#f97316' ? 'url(#arrowO)' : 'url(#arrowT)'
+                return (
+                  <line key={id}
+                    x1={x1} y1={y1} x2={x2} y2={y2}
+                    stroke={col} strokeWidth={on ? 2 : 1.5}
+                    strokeDasharray={on ? '8 6' : '4 8'}
+                    strokeOpacity={on ? 0.9 : 0.25}
+                    markerEnd={on ? mark : undefined}
+                    style={on ? { animation: 'csc-flow 0.8s linear infinite' } : {}}
+                  />
+                )
+              })}
+
+              {/* outer nodes */}
+              {spokes.map(({ id, label, angle, icon, col }) => {
+                const rad = angle * Math.PI / 180
+                const nx  = cx + r * Math.cos(rad)
+                const ny  = cy + r * Math.sin(rad)
+                const on  = active.includes(id)
+                return (
+                  <g key={id} style={on ? { animation: 'csc-pop 0.4s ease-out both' } : {}}>
+                    <circle cx={nx} cy={ny} r={30}
+                      fill={on ? col + '18' : '#f5f5f0'}
+                      stroke={col} strokeWidth={on ? 2 : 1}
+                      strokeOpacity={on ? 1 : 0.3}
+                      style={on ? { animation: col === '#f97316' ? 'csc-glow-o 2s ease-in-out infinite' : 'csc-glow-t 2s ease-in-out infinite' } : {}}
+                    />
+                    <text x={nx} y={ny - 4} textAnchor="middle" fontSize="16">{icon}</text>
+                    <text x={nx} y={ny + 13} textAnchor="middle" fontSize="9.5"
+                      fontFamily="'DM Sans', sans-serif" fontWeight={on ? 700 : 400}
+                      fill={on ? col : '#c8c2b8'}>
+                      {label}
+                    </text>
+                  </g>
+                )
+              })}
+
+              {/* centre node */}
+              <circle cx={cx} cy={cy} r={44} fill="url(#centreGrad)"
+                stroke="#f97316" strokeWidth={2}
+                style={{ animation: 'csc-glow-o 1.8s ease-in-out infinite' }}
+              />
+              <text x={cx} y={cy - 8} textAnchor="middle" fontSize="22">⚡</text>
+              <text x={cx} y={cy + 10} textAnchor="middle" fontSize="11"
+                fontFamily="'DM Sans', sans-serif" fontWeight={700} fill="#f97316">
+                Cascade
+              </text>
+              <text x={cx} y={cy + 24} textAnchor="middle" fontSize="9"
+                fontFamily="'DM Sans', sans-serif" fill="#a09890">
+                analysing
+              </text>
+            </svg>
+
+            {/* status + policy label */}
+            <div style={{ textAlign: 'center' }}>
+              <p style={{ fontSize: '18px', fontWeight: 700, color: '#1a1612', margin: '0 0 6px' }}>{statusMsg}</p>
+              <p style={{ fontSize: '13px', color: '#a09890', margin: 0, maxWidth: '480px', lineHeight: 1.5 }}>"{policy}"</p>
+            </div>
+
+            {/* progress pills */}
+            <div style={{ display: 'flex', gap: '8px' }}>
+              {spokes.map(({ id, label, col }) => {
+                const on = active.includes(id)
+                return (
+                  <div key={id} style={{
+                    padding: '5px 14px', borderRadius: '100px', fontSize: '12px', fontWeight: 600,
+                    background: on ? col + '18' : '#f0ece8',
+                    color: on ? col : '#c8c2b8',
+                    border: `1px solid ${on ? col + '44' : '#e8e4dc'}`,
+                    transition: 'all 0.3s',
+                  }}>
+                    {on ? '✓ ' : ''}{label}
+                  </div>
+                )
+              })}
+            </div>
+
           </div>
-          <div style={{ width: '52px', height: '52px', borderRadius: '50%', border: '3px solid #fed7aa', borderTopColor: '#f97316', animation: 'csc-spin 0.65s linear infinite', marginBottom: '24px' }} />
-          <p style={{ fontSize: '20px', fontWeight: 700, color: '#1a1612', marginBottom: '6px' }}>{statusMsg}</p>
-          <p style={{ fontSize: '14px', color: '#a09890' }}>Building a full impact analysis across markets, people, and voters.</p>
-        </div>
-      )}
+        )
+      })()}
 
       {/* ── results: map background + floating panels ── */}
       {phase === 'done' && analysis && (
@@ -241,6 +363,48 @@ export default function App()
 
           {/* full-screen world map background */}
           <WorldMap data={analysis.geographic_impacts} background />
+
+          {/* ── STATS STRIP (bottom centre) ── */}
+          {(() => {
+            const geo     = analysis.geographic_impacts || []
+            const markets = analysis.market_impacts     || []
+            const pos     = markets.filter(m => m.direction === 'positive').length
+            const neg     = markets.filter(m => m.direction === 'negative').length
+            const topHit  = [...markets].sort((a, b) => (b.magnitude||0) - (a.magnitude||0))[0]
+            const ucColor = analysis.uncertainty_level === 'high' ? '#dc2626' : analysis.uncertainty_level === 'medium' ? '#d97706' : '#0d9488'
+            const stats = [
+              { label: 'Countries',  value: geo.length,                        color: '#f97316' },
+              { label: '↑ Sectors',  value: pos,                               color: '#0d9488' },
+              { label: '↓ Sectors',  value: neg,                               color: '#dc2626' },
+              { label: 'Hardest hit', value: topHit?.sector ?? '—',            color: '#f97316' },
+              { label: 'Confidence', value: analysis.uncertainty_level ?? '—', color: ucColor   },
+            ]
+            return (
+              <div style={{
+                position: 'absolute', bottom: '24px', left: '50%', transform: 'translateX(-50%)',
+                ...GLASS, padding: '10px 8px',
+                display: 'flex', alignItems: 'stretch',
+                animation: 'csc-fadein 0.5s 0.4s both', zIndex: 10,
+                whiteSpace: 'nowrap',
+              }}>
+                {stats.map(({ label, value, color }, i) => (
+                  <div key={label} style={{ display: 'flex', alignItems: 'center' }}>
+                    <div style={{ textAlign: 'center', padding: '0 16px' }}>
+                      <div style={{ fontSize: '16px', fontWeight: 800, letterSpacing: '-0.03em', color, lineHeight: 1.1 }}>{value}</div>
+                      <div style={{ fontSize: '10px', color: '#a09890', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.06em', marginTop: '2px' }}>{label}</div>
+                    </div>
+                    {i < stats.length - 1 && <div style={{ width: '1px', background: '#f0ece6', alignSelf: 'stretch', margin: '4px 0' }} />}
+                  </div>
+                ))}
+                <div style={{ width: '1px', background: '#f0ece6', alignSelf: 'stretch', margin: '4px 0' }} />
+                <div style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '0 16px', fontSize: '12px', color: '#7a7268' }}>
+                  <span><span style={{ color: '#0d9488' }}>●</span> Positive</span>
+                  <span><span style={{ color: '#dc2626' }}>●</span> Negative</span>
+                  <span style={{ color: '#c8c2b8', fontSize: '11px' }}>scroll to zoom</span>
+                </div>
+              </div>
+            )
+          })()}
 
           {/* ── LEFT PANEL: cascade graph + summary ── */}
           <div
@@ -446,18 +610,6 @@ export default function App()
             )}
           </div>
 
-          {/* map legend bottom-center */}
-          <div style={{
-            position: 'absolute', bottom: '24px', left: '50%', transform: 'translateX(-50%)',
-            ...GLASS, padding: '8px 20px',
-            display: 'flex', gap: '20px', fontSize: '12px', color: '#7a7268',
-            animation: 'csc-fadein 0.5s 0.4s both', whiteSpace: 'nowrap',
-          }}>
-            <span><span style={{ color: '#0d9488' }}>●</span> Positive impact</span>
-            <span><span style={{ color: '#dc2626' }}>●</span> Negative impact</span>
-            <span><span style={{ color: '#a09890' }}>●</span> Mixed</span>
-            <span style={{ color: '#c8c2b8' }}>Circle size = magnitude · Scroll to zoom</span>
-          </div>
 
         </div>
       )}
