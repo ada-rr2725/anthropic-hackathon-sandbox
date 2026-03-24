@@ -1,9 +1,11 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { streamMessage } from './services/anthropic'
 import { parsePolicyAnalysis } from './services/modelParser'
-import { executeVizCode } from './services/codeExecutor'
 import { POLICY_ANALYSIS_PROMPT } from './prompts/understanding'
-import { GENERATION_PROMPT } from './prompts/generation'
+import MarketsChart from './components/MarketsChart'
+import PeopleChart from './components/PeopleChart'
+import VotersChart from './components/VotersChart'
+import TimelineView from './components/TimelineView'
 
 const EXAMPLES = [
   'The US imposes a 25% blanket tariff on all Chinese imports',
@@ -12,6 +14,13 @@ const EXAMPLES = [
   'The US passes a federal Medicare for All healthcare bill',
   'Universal Basic Income of £1,000/month is introduced in the UK',
   'The US eliminates capital gains tax for investments held over 5 years',
+]
+
+const TABS = [
+  { id: 'markets', label: 'Markets' },
+  { id: 'people', label: 'People' },
+  { id: 'voters', label: 'Voters' },
+  { id: 'timeline', label: 'Timeline' },
 ]
 
 const S = {
@@ -210,6 +219,31 @@ const S = {
     margin: '32px 0',
   },
 
+  // — tabs —
+  tabBar: {
+    display: 'flex',
+    gap: '4px',
+    borderBottom: '1px solid #1e1e30',
+    marginBottom: '24px',
+  },
+  tab: {
+    padding: '10px 20px',
+    fontSize: '14px',
+    fontWeight: 500,
+    borderRadius: '8px 8px 0 0',
+    background: 'transparent',
+    color: '#7a7590',
+    border: 'none',
+    borderBottom: '2px solid transparent',
+    cursor: 'pointer',
+    transition: 'all 0.15s',
+  },
+  tabActive: {
+    color: '#22d3ee',
+    borderBottomColor: '#22d3ee',
+    background: '#161625',
+  },
+
   // — error —
   errorBox: {
     background: '#1a0f0f',
@@ -240,12 +274,11 @@ function Spinner()
 
 export default function App()
 {
-  const [phase, setPhase] = useState('idle')   // idle | analyzing | generating | done | error
+  const [phase, setPhase] = useState('idle')   // idle | analyzing | done | error
   const [policy, setPolicy] = useState('')
   const [analysis, setAnalysis] = useState(null)
   const [error, setError] = useState(null)
-  const vizRef = useRef(null)
-  const textareaRef = useRef(null)
+  const [activeTab, setActiveTab] = useState('markets')
 
   // inject keyframe animation once
   useEffect(() =>
@@ -256,41 +289,18 @@ export default function App()
     return () => document.head.removeChild(style)
   }, [])
 
-  // execute viz code when phase transitions to done and vizCode is ready
-  const pendingVizCode = useRef(null)
-
-  useEffect(() =>
-  {
-    if (phase === 'done' && pendingVizCode.current && vizRef.current)
-    {
-      // small delay to let React flush the container into the DOM
-      requestAnimationFrame(() =>
-      {
-        const result = executeVizCode(pendingVizCode.current, 'cascade-viz-container')
-        if (!result.success)
-        {
-          console.error('[cascade] viz execution error:', result.error)
-        }
-        pendingVizCode.current = null
-      })
-    }
-  }, [phase])
-
   async function handleSubmit()
   {
     const trimmed = policy.trim()
-    if (!trimmed || phase === 'analyzing' || phase === 'generating') return
+    if (!trimmed || phase === 'analyzing') return
 
     setPhase('analyzing')
     setAnalysis(null)
     setError(null)
-    pendingVizCode.current = null
-
-    if (vizRef.current) vizRef.current.innerHTML = ''
+    setActiveTab('markets')
 
     try
     {
-      // call 1: policy analysis
       const analysisText = await streamMessage({
         system: POLICY_ANALYSIS_PROMPT,
         userMessage: trimmed,
@@ -298,15 +308,6 @@ export default function App()
 
       const parsed = parsePolicyAnalysis(analysisText)
       setAnalysis(parsed)
-      setPhase('generating')
-
-      // call 2: generate visualisation
-      const vizCode = await streamMessage({
-        system: GENERATION_PROMPT,
-        userMessage: JSON.stringify(parsed, null, 2),
-      })
-
-      pendingVizCode.current = vizCode
       setPhase('done')
     }
     catch (err)
@@ -322,8 +323,7 @@ export default function App()
     setPolicy('')
     setAnalysis(null)
     setError(null)
-    pendingVizCode.current = null
-    if (vizRef.current) vizRef.current.innerHTML = ''
+    setActiveTab('markets')
   }
 
   const uncertaintyColor =
@@ -359,7 +359,6 @@ export default function App()
             </p>
 
             <textarea
-              ref={textareaRef}
               style={S.textarea}
               value={policy}
               onChange={e => setPolicy(e.target.value)}
@@ -413,8 +412,8 @@ export default function App()
           </>
         )}
 
-        {/* ── analysis header (shown during generating + done) ── */}
-        {(phase === 'generating' || phase === 'done') && analysis && (
+        {/* ── results ── */}
+        {phase === 'done' && analysis && (
           <>
             <div style={S.policyPill}>{policy}</div>
 
@@ -444,23 +443,31 @@ export default function App()
               </p>
             )}
 
-            {phase === 'generating' && (
-              <div style={S.loadingRow}>
-                <Spinner />
-                <span>Building visualisations...</span>
-              </div>
-            )}
-
             <div style={S.divider} />
+
+            {/* ── tab bar ── */}
+            <div style={S.tabBar}>
+              {TABS.map(t => (
+                <button
+                  key={t.id}
+                  style={{
+                    ...S.tab,
+                    ...(activeTab === t.id ? S.tabActive : {}),
+                  }}
+                  onClick={() => setActiveTab(t.id)}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+
+            {/* ── tab panels ── */}
+            {activeTab === 'markets' && <MarketsChart data={analysis.market_impacts} />}
+            {activeTab === 'people' && <PeopleChart data={analysis.demographic_impacts} />}
+            {activeTab === 'voters' && <VotersChart data={analysis.voting_demographics} />}
+            {activeTab === 'timeline' && <TimelineView data={analysis.timeline} />}
           </>
         )}
-
-        {/* ── visualisation container ── */}
-        <div
-          id="cascade-viz-container"
-          ref={vizRef}
-          style={{ width: '100%', minHeight: phase === 'done' ? '600px' : '0' }}
-        />
 
       </main>
     </div>
