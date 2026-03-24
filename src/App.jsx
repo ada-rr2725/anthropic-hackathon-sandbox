@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { streamMessage } from './services/anthropic'
 import { parsePolicyAnalysis } from './services/modelParser'
 import { POLICY_ANALYSIS_PROMPT } from './prompts/understanding'
+import WorldMap from './components/WorldMap'
 import MarketsChart from './components/MarketsChart'
 import PeopleChart from './components/PeopleChart'
 import VotersChart from './components/VotersChart'
@@ -17,277 +18,38 @@ const EXAMPLES = [
 ]
 
 const TABS = [
-  { id: 'markets', label: 'Markets' },
-  { id: 'people', label: 'People' },
-  { id: 'voters', label: 'Voters' },
+  { id: 'map',      label: '🌍 World Map' },
+  { id: 'markets',  label: 'Markets' },
+  { id: 'people',   label: 'People' },
+  { id: 'voters',   label: 'Voters' },
   { id: 'timeline', label: 'Timeline' },
 ]
 
-const S = {
-  app: {
-    minHeight: '100svh',
-    background: '#08080f',
-    color: '#e2ddd8',
-    fontFamily: "'DM Sans', system-ui, sans-serif",
-    display: 'flex',
-    flexDirection: 'column',
-  },
-  header: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: '16px 32px',
-    borderBottom: '1px solid #1e1e30',
-    background: '#0f0f1a',
-    position: 'sticky',
-    top: 0,
-    zIndex: 10,
-  },
-  logoRow: {
-    display: 'flex',
-    alignItems: 'baseline',
-    gap: '12px',
-  },
-  logoText: {
-    fontSize: '20px',
-    fontWeight: 600,
-    letterSpacing: '-0.03em',
-    color: '#e2ddd8',
-  },
-  logoAccent: {
-    color: '#22d3ee',
-  },
-  logoTagline: {
-    fontSize: '13px',
-    color: '#7a7590',
-    letterSpacing: '0.02em',
-  },
-  newBtn: {
-    background: 'transparent',
-    border: '1px solid #2a2a3e',
-    borderRadius: '8px',
-    color: '#7a7590',
-    padding: '8px 16px',
-    fontSize: '13px',
-    cursor: 'pointer',
-    transition: 'all 0.15s',
-  },
-  main: {
-    flex: 1,
-    maxWidth: '900px',
-    width: '100%',
-    margin: '0 auto',
-    padding: '48px 32px',
-  },
+const ANIM = `
+  @keyframes csc-spin { to { transform: rotate(360deg); } }
+  @keyframes csc-pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+  .pill-btn:hover { background:#fff0e8 !important; border-color:#f97316 !important; color:#f97316 !important; }
+  .submit-btn:hover { box-shadow: 0 6px 28px rgba(249,115,22,0.45) !important; transform: translateY(-1px); }
+  .submit-btn:active { transform: scale(0.98) !important; }
+  .tab-btn:hover { color: #1a1612 !important; }
+`
 
-  // — idle state —
-  headline: {
-    fontSize: '36px',
-    fontWeight: 600,
-    letterSpacing: '-0.03em',
-    lineHeight: 1.2,
-    marginBottom: '12px',
-    color: '#e2ddd8',
-  },
-  subheadline: {
-    fontSize: '16px',
-    color: '#7a7590',
-    lineHeight: 1.6,
-    marginBottom: '32px',
-    maxWidth: '580px',
-  },
-  textarea: {
-    width: '100%',
-    background: '#0f0f1a',
-    border: '1px solid #2a2a3e',
-    borderRadius: '12px',
-    color: '#e2ddd8',
-    fontSize: '16px',
-    lineHeight: 1.6,
-    padding: '16px 20px',
-    resize: 'vertical',
-    minHeight: '100px',
-    marginBottom: '16px',
-    transition: 'border-color 0.15s',
-  },
-  examplesLabel: {
-    fontSize: '12px',
-    color: '#7a7590',
-    textTransform: 'uppercase',
-    letterSpacing: '0.08em',
-    marginBottom: '10px',
-  },
-  examples: {
-    display: 'flex',
-    flexWrap: 'wrap',
-    gap: '8px',
-    marginBottom: '24px',
-  },
-  pill: {
-    background: '#0f0f1a',
-    border: '1px solid #1e1e30',
-    borderRadius: '100px',
-    color: '#7a7590',
-    fontSize: '13px',
-    padding: '6px 14px',
-    cursor: 'pointer',
-    transition: 'all 0.15s',
-  },
-  submitBtn: {
-    background: '#22d3ee',
-    color: '#08080f',
-    border: 'none',
-    borderRadius: '10px',
-    padding: '12px 28px',
-    fontSize: '15px',
-    fontWeight: 600,
-    cursor: 'pointer',
-    transition: 'all 0.15s',
-    letterSpacing: '-0.01em',
-  },
-
-  // — loading state —
-  policyPill: {
-    display: 'inline-block',
-    background: '#161625',
-    border: '1px solid #2a2a3e',
-    borderRadius: '8px',
-    padding: '8px 16px',
-    fontSize: '14px',
-    color: '#7a7590',
-    marginBottom: '32px',
-    maxWidth: '100%',
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
-    whiteSpace: 'nowrap',
-  },
-  loadingRow: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '12px',
-    marginBottom: '12px',
-    fontSize: '16px',
-    fontWeight: 500,
-    color: '#e2ddd8',
-  },
-  loadingHint: {
-    fontSize: '14px',
-    color: '#7a7590',
-    lineHeight: 1.6,
-  },
-
-  // — analysis header —
-  coreInsight: {
-    fontSize: '28px',
-    fontWeight: 600,
-    letterSpacing: '-0.02em',
-    lineHeight: 1.3,
-    marginBottom: '12px',
-    color: '#e2ddd8',
-  },
-  summary: {
-    fontSize: '15px',
-    color: '#7a7590',
-    lineHeight: 1.7,
-    marginBottom: '16px',
-  },
-  metaRow: {
-    display: 'flex',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-    gap: '10px',
-    marginBottom: '32px',
-  },
-  badge: {
-    fontSize: '12px',
-    fontWeight: 500,
-    textTransform: 'uppercase',
-    letterSpacing: '0.07em',
-    padding: '4px 10px',
-    borderRadius: '6px',
-    background: '#161625',
-    border: '1px solid #2a2a3e',
-  },
-  tradeoff: {
-    fontSize: '13px',
-    color: '#7a7590',
-    fontStyle: 'italic',
-  },
-  divider: {
-    height: '1px',
-    background: '#1e1e30',
-    margin: '32px 0',
-  },
-
-  // — tabs —
-  tabBar: {
-    display: 'flex',
-    gap: '4px',
-    borderBottom: '1px solid #1e1e30',
-    marginBottom: '24px',
-  },
-  tab: {
-    padding: '10px 20px',
-    fontSize: '14px',
-    fontWeight: 500,
-    borderRadius: '8px 8px 0 0',
-    background: 'transparent',
-    color: '#7a7590',
-    border: 'none',
-    borderBottom: '2px solid transparent',
-    cursor: 'pointer',
-    transition: 'all 0.15s',
-  },
-  tabActive: {
-    color: '#22d3ee',
-    borderBottomColor: '#22d3ee',
-    background: '#161625',
-  },
-
-  // — error —
-  errorBox: {
-    background: '#1a0f0f',
-    border: '1px solid #3a1e1e',
-    borderRadius: '10px',
-    padding: '16px 20px',
-    color: '#f87171',
-    fontSize: '14px',
-    marginTop: '16px',
-  },
-}
-
-function Spinner()
-{
-  return (
-    <span style={{
-      display: 'inline-block',
-      width: '18px',
-      height: '18px',
-      borderRadius: '50%',
-      border: '2px solid #2a2a3e',
-      borderTopColor: '#22d3ee',
-      animation: 'cascade-spin 0.7s linear infinite',
-      flexShrink: 0,
-    }} />
-  )
-}
 
 export default function App()
 {
-  const [phase, setPhase] = useState('idle')   // idle | analyzing | done | error
-  const [policy, setPolicy] = useState('')
+  const [phase, setPhase]       = useState('idle')
+  const [policy, setPolicy]     = useState('')
   const [analysis, setAnalysis] = useState(null)
-  const [error, setError] = useState(null)
-  const [activeTab, setActiveTab] = useState('markets')
+  const [error, setError]       = useState(null)
+  const [activeTab, setActiveTab] = useState('map')
   const [statusMsg, setStatusMsg] = useState('')
 
-  // inject keyframe animation once
   useEffect(() =>
   {
-    const style = document.createElement('style')
-    style.textContent = `@keyframes cascade-spin { to { transform: rotate(360deg); } }`
-    document.head.appendChild(style)
-    return () => document.head.removeChild(style)
+    const s = document.createElement('style')
+    s.textContent = ANIM
+    document.head.appendChild(s)
+    return () => document.head.removeChild(s)
   }, [])
 
   async function handleSubmit()
@@ -298,24 +60,24 @@ export default function App()
     setPhase('analyzing')
     setAnalysis(null)
     setError(null)
-    setActiveTab('markets')
+    setActiveTab('map')
     setStatusMsg('Identifying policy mechanisms...')
 
     try
     {
-      const analysisText = await streamMessage({
+      const text = await streamMessage({
         system: POLICY_ANALYSIS_PROMPT,
         userMessage: trimmed,
         onChunk: (_, full) =>
         {
-          if (full.includes('"voting_demographics"')) setStatusMsg('Mapping electoral implications...')
+          if (full.includes('"voting_demographics"'))      setStatusMsg('Mapping electoral implications...')
           else if (full.includes('"demographic_impacts"')) setStatusMsg('Assessing demographic effects...')
-          else if (full.includes('"market_impacts"')) setStatusMsg('Mapping market sector exposure...')
+          else if (full.includes('"market_impacts"'))      setStatusMsg('Mapping market exposure...')
+          else if (full.includes('"geographic_impacts"'))  setStatusMsg('Tracing geographic ripple effects...')
         },
       })
 
-      const parsed = parsePolicyAnalysis(analysisText)
-      setAnalysis(parsed)
+      setAnalysis(parsePolicyAnalysis(text))
       setPhase('done')
     }
     catch (err)
@@ -327,79 +89,114 @@ export default function App()
 
   function handleReset()
   {
-    setPhase('idle')
-    setPolicy('')
-    setAnalysis(null)
-    setError(null)
-    setActiveTab('markets')
+    setPhase('idle'); setPolicy(''); setAnalysis(null); setError(null); setActiveTab('map')
   }
 
   const uncertaintyColor =
-    analysis?.uncertainty_level === 'high' ? '#f87171' :
-    analysis?.uncertainty_level === 'medium' ? '#fbbf24' : '#34d399'
+    analysis?.uncertainty_level === 'high'   ? '#dc2626' :
+    analysis?.uncertainty_level === 'medium' ? '#d97706' : '#0d9488'
 
   return (
-    <div style={S.app}>
+    <div style={{ minHeight: '100svh', background: '#f5f5f0', fontFamily: "'DM Sans', system-ui, sans-serif", color: '#1a1612', display: 'flex', flexDirection: 'column' }}>
+
       {/* ── header ── */}
-      <header style={S.header}>
-        <div style={S.logoRow}>
-          <span style={S.logoText}>
-            Cas<span style={S.logoAccent}>ca</span>de
+      <header style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: '0 36px', height: '60px',
+        background: '#fff', borderBottom: '1px solid #e8e4dc',
+        position: 'sticky', top: 0, zIndex: 10,
+      }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px' }}>
+          <span style={{ fontSize: '22px', fontWeight: 800, letterSpacing: '-0.05em', color: '#1a1612' }}>
+            Cas<span style={{ color: '#f97316' }}>ca</span>de
           </span>
-          <span style={S.logoTagline}>Policy Impact Analysis</span>
+          <span style={{ fontSize: '12px', color: '#a09890', letterSpacing: '0.06em', textTransform: 'uppercase', fontWeight: 500 }}>
+            Policy Impact Analysis
+          </span>
         </div>
         {phase !== 'idle' && (
-          <button style={S.newBtn} onClick={handleReset}>
+          <button
+            onClick={handleReset}
+            style={{ background: 'none', border: '1px solid #e8e4dc', borderRadius: '8px', padding: '7px 16px', fontSize: '13px', color: '#7a7268', cursor: 'pointer' }}
+          >
             ← New policy
           </button>
         )}
       </header>
 
-      <main style={S.main}>
+      <main style={{ flex: 1, maxWidth: '960px', width: '100%', margin: '0 auto', padding: '56px 36px 80px' }}>
 
-        {/* ── idle / error: input form ── */}
+        {/* ── idle / error ── */}
         {(phase === 'idle' || phase === 'error') && (
           <>
-            <h1 style={S.headline}>What policy do you want to analyse?</h1>
-            <p style={S.subheadline}>
-              Describe any law, regulation, or social action. Cascade will trace its effects
-              across financial markets, demographics, and voting blocs.
-            </p>
-
-            <textarea
-              style={S.textarea}
-              value={policy}
-              onChange={e => setPolicy(e.target.value)}
-              placeholder="e.g. The US imposes a 25% blanket tariff on all Chinese imports"
-              rows={3}
-              onKeyDown={e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) handleSubmit() }}
-            />
-
-            <p style={S.examplesLabel}>Try an example</p>
-            <div style={S.examples}>
-              {EXAMPLES.map(ex => (
-                <button
-                  key={ex}
-                  style={S.pill}
-                  onClick={() => setPolicy(ex)}
-                  onMouseEnter={e => { e.target.style.borderColor = '#2a2a3e'; e.target.style.color = '#e2ddd8' }}
-                  onMouseLeave={e => { e.target.style.borderColor = '#1e1e30'; e.target.style.color = '#7a7590' }}
-                >
-                  {ex}
-                </button>
-              ))}
+            {/* hero */}
+            <div style={{ marginBottom: '48px' }}>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: '#fff7ed', border: '1px solid #fed7aa', borderRadius: '100px', padding: '5px 14px', fontSize: '12px', color: '#f97316', fontWeight: 600, marginBottom: '20px', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#f97316', animation: 'csc-pulse 2s infinite', flexShrink: 0 }} />
+                Powered by Claude AI
+              </div>
+              <h1 style={{ fontSize: '48px', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1.1, marginBottom: '16px', color: '#1a1612' }}>
+                What policy do you<br />
+                <span style={{ color: '#f97316' }}>want to analyse?</span>
+              </h1>
+              <p style={{ fontSize: '17px', color: '#7a7268', lineHeight: 1.65, maxWidth: '540px' }}>
+                Describe any law, regulation, or social action. Cascade traces ripple effects across global markets, demographics, and voting blocs — instantly.
+              </p>
             </div>
 
-            <button
-              style={{ ...S.submitBtn, opacity: policy.trim() ? 1 : 0.4, cursor: policy.trim() ? 'pointer' : 'not-allowed' }}
-              onClick={handleSubmit}
-              disabled={!policy.trim()}
-            >
-              Analyse Policy →
-            </button>
+            {/* input card */}
+            <div style={{ background: '#fff', border: '1px solid #e8e4dc', borderRadius: '20px', padding: '28px', marginBottom: '32px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }}>
+              <textarea
+                value={policy}
+                onChange={e => setPolicy(e.target.value)}
+                placeholder="e.g. The US imposes a 25% blanket tariff on all Chinese imports…"
+                rows={3}
+                onKeyDown={e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) handleSubmit() }}
+                style={{
+                  width: '100%', background: '#fafaf8', border: '1.5px solid #e8e4dc',
+                  borderRadius: '12px', color: '#1a1612', fontSize: '16px',
+                  lineHeight: 1.6, padding: '14px 18px', resize: 'vertical',
+                  minHeight: '90px', marginBottom: '16px', transition: 'border-color 0.2s, box-shadow 0.2s',
+                }}
+              />
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
+                <span style={{ fontSize: '12px', color: '#c8c2b8' }}>⌘ + Enter to submit</span>
+                <button
+                  className="submit-btn"
+                  onClick={handleSubmit}
+                  disabled={!policy.trim()}
+                  style={{
+                    background: policy.trim() ? 'linear-gradient(135deg, #f97316, #ea580c)' : '#e8e4dc',
+                    color: policy.trim() ? '#fff' : '#a09890',
+                    border: 'none', borderRadius: '12px', padding: '13px 32px',
+                    fontSize: '15px', fontWeight: 700, letterSpacing: '-0.01em',
+                    cursor: policy.trim() ? 'pointer' : 'not-allowed',
+                    boxShadow: policy.trim() ? '0 4px 20px rgba(249,115,22,0.35)' : 'none',
+                    transition: 'all 0.15s',
+                  }}
+                >
+                  Analyse Policy →
+                </button>
+              </div>
+            </div>
+
+            {/* examples */}
+            <div>
+              <p style={{ fontSize: '11px', color: '#c8c2b8', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 600, marginBottom: '12px' }}>Try an example</p>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                {EXAMPLES.map(ex => (
+                  <button key={ex} className="pill-btn" onClick={() => setPolicy(ex)} style={{
+                    background: '#fff', border: '1px solid #e8e4dc', borderRadius: '100px',
+                    color: '#7a7268', fontSize: '13px', padding: '7px 16px', cursor: 'pointer', transition: 'all 0.15s',
+                  }}>
+                    {ex}
+                  </button>
+                ))}
+              </div>
+            </div>
 
             {phase === 'error' && error && (
-              <div style={S.errorBox}>
+              <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '12px', padding: '16px 20px', color: '#dc2626', fontSize: '14px', marginTop: '24px' }}>
                 <strong>Error:</strong> {error}
               </div>
             )}
@@ -408,69 +205,78 @@ export default function App()
 
         {/* ── analyzing ── */}
         {phase === 'analyzing' && (
-          <>
-            <div style={S.policyPill}>{policy}</div>
-            <div style={S.loadingRow}>
-              <Spinner />
-              <span>{statusMsg}</span>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: '80px', textAlign: 'center' }}>
+            <div style={{ background: '#fff', border: '1px solid #e8e4dc', borderRadius: '16px', padding: '10px 20px', fontSize: '14px', color: '#7a7268', marginBottom: '40px', maxWidth: '600px' }}>
+              {policy}
             </div>
-          </>
+            <div style={{ width: '52px', height: '52px', borderRadius: '50%', border: '3px solid #fed7aa', borderTopColor: '#f97316', animation: 'csc-spin 0.65s linear infinite', marginBottom: '24px' }} />
+            <p style={{ fontSize: '18px', fontWeight: 600, color: '#1a1612', marginBottom: '6px' }}>{statusMsg}</p>
+            <p style={{ fontSize: '14px', color: '#a09890' }}>Cascade is building a full impact analysis across markets, people, and voters.</p>
+          </div>
         )}
 
         {/* ── results ── */}
         {phase === 'done' && analysis && (
           <>
-            <div style={S.policyPill}>{policy}</div>
-
-            <h2 style={S.coreInsight}>{analysis.core_insight}</h2>
-            <p style={S.summary}>{analysis.summary}</p>
-
-            <div style={S.metaRow}>
-              {analysis.policy_type && (
-                <span style={{ ...S.badge, color: '#22d3ee', borderColor: '#1a3a42' }}>
-                  {analysis.policy_type.replace(/_/g, ' ')}
-                </span>
-              )}
-              {analysis.uncertainty_level && (
-                <span style={{ ...S.badge, color: uncertaintyColor }}>
-                  {analysis.uncertainty_level} uncertainty
-                </span>
-              )}
-              {analysis.key_tradeoff && (
-                <span style={S.tradeoff}>⚖ {analysis.key_tradeoff}</span>
+            {/* result header card */}
+            <div style={{ background: '#fff', border: '1px solid #e8e4dc', borderRadius: '20px', padding: '32px', marginBottom: '28px', boxShadow: '0 2px 16px rgba(0,0,0,0.06)' }}>
+              <div style={{ fontSize: '12px', color: '#a09890', marginBottom: '8px', fontWeight: 500 }}>{policy}</div>
+              <h2 style={{ fontSize: '28px', fontWeight: 800, letterSpacing: '-0.03em', lineHeight: 1.25, marginBottom: '12px', color: '#1a1612' }}>
+                {analysis.core_insight}
+              </h2>
+              <p style={{ fontSize: '15px', color: '#7a7268', lineHeight: 1.75, marginBottom: '20px' }}>
+                {analysis.summary}
+              </p>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center', marginBottom: analysis.historical_analogues?.length ? '16px' : '0' }}>
+                {analysis.policy_type && (
+                  <span style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', padding: '4px 12px', borderRadius: '6px', background: '#fff7ed', color: '#f97316', border: '1px solid #fed7aa' }}>
+                    {analysis.policy_type.replace(/_/g, ' ')}
+                  </span>
+                )}
+                {analysis.uncertainty_level && (
+                  <span style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.07em', padding: '4px 12px', borderRadius: '6px', background: '#f8fafc', color: uncertaintyColor, border: `1px solid ${uncertaintyColor}33` }}>
+                    {analysis.uncertainty_level} uncertainty
+                  </span>
+                )}
+                {analysis.key_tradeoff && (
+                  <span style={{ fontSize: '13px', color: '#7a7268', fontStyle: 'italic' }}>⚖ {analysis.key_tradeoff}</span>
+                )}
+              </div>
+              {analysis.historical_analogues?.length > 0 && (
+                <p style={{ fontSize: '13px', color: '#a09890' }}>
+                  <strong style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.07em', color: '#c8c2b8', fontWeight: 600 }}>Historical analogues </strong>
+                  {analysis.historical_analogues.join(' · ')}
+                </p>
               )}
             </div>
 
-            {analysis.historical_analogues?.length > 0 && (
-              <p style={{ fontSize: '13px', color: '#7a7590', marginBottom: '24px' }}>
-                <strong style={{ color: '#3a3a52', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Historical analogues </strong>
-                {analysis.historical_analogues.join(' · ')}
-              </p>
-            )}
-
-            <div style={S.divider} />
-
-            {/* ── tab bar ── */}
-            <div style={S.tabBar}>
+            {/* tab bar */}
+            <div style={{ display: 'flex', gap: '4px', borderBottom: '2px solid #e8e4dc', marginBottom: '28px' }}>
               {TABS.map(t => (
-                <button
-                  key={t.id}
-                  style={{
-                    ...S.tab,
-                    ...(activeTab === t.id ? S.tabActive : {}),
-                  }}
+                <button key={t.id} className="tab-btn"
                   onClick={() => setActiveTab(t.id)}
+                  style={{
+                    padding: '10px 20px', fontSize: '14px', fontWeight: 600,
+                    borderRadius: '8px 8px 0 0', background: activeTab === t.id ? '#fff' : 'transparent',
+                    color: activeTab === t.id ? '#f97316' : '#a09890',
+                    border: 'none',
+                    borderBottom: activeTab === t.id ? '2px solid #f97316' : '2px solid transparent',
+                    marginBottom: '-2px', cursor: 'pointer', transition: 'all 0.15s',
+                  }}
                 >
                   {t.label}
                 </button>
               ))}
             </div>
 
-            {/* ── tab panels ── */}
-            {activeTab === 'markets' && <MarketsChart data={analysis.market_impacts} />}
-            {activeTab === 'people' && <PeopleChart data={analysis.demographic_impacts} />}
-            {activeTab === 'voters' && <VotersChart data={analysis.voting_demographics} />}
-            {activeTab === 'timeline' && <TimelineView data={analysis.timeline} />}
+            {/* chart panels — wrapped in a white card */}
+            <div style={{ background: '#fff', border: '1px solid #e8e4dc', borderRadius: '20px', padding: '28px', boxShadow: '0 2px 12px rgba(0,0,0,0.05)' }}>
+              {activeTab === 'map'      && <WorldMap    data={analysis.geographic_impacts} />}
+              {activeTab === 'markets'  && <MarketsChart data={analysis.market_impacts} />}
+              {activeTab === 'people'   && <PeopleChart  data={analysis.demographic_impacts} />}
+              {activeTab === 'voters'   && <VotersChart  data={analysis.voting_demographics} />}
+              {activeTab === 'timeline' && <TimelineView data={analysis.timeline} />}
+            </div>
           </>
         )}
 

@@ -10,11 +10,11 @@ const ALIGNMENT_SCORE = {
 
 function barColor(score)
 {
-    if (score >= 2) return '#10b981'
-    if (score > 0) return '#34d399'
-    if (score <= -2) return '#ef4444'
+    if (score >= 2) return '#0d9488'
+    if (score > 0) return '#14b8a6'
+    if (score <= -2) return '#dc2626'
     if (score < 0) return '#f87171'
-    return '#2a2a3e'
+    return '#d4cfc5'
 }
 
 function sigWidth(sig)
@@ -58,9 +58,9 @@ export default function VotersChart({ data })
             hovertext: hoverText,
             hoverinfo: 'text',
             hoverlabel: {
-                bgcolor: '#161625',
-                bordercolor: '#2a2a3e',
-                font: { family: "'DM Sans', sans-serif", color: '#e2ddd8', size: 13 },
+                bgcolor: '#ffffff',
+                bordercolor: '#d4cfc5',
+                font: { family: "'DM Sans', sans-serif", color: '#1a1612', size: 13 },
                 align: 'left',
             },
         }
@@ -68,26 +68,26 @@ export default function VotersChart({ data })
         const layout = {
             paper_bgcolor: 'rgba(0,0,0,0)',
             plot_bgcolor: 'rgba(0,0,0,0)',
-            font: { family: "'DM Sans', system-ui, sans-serif", color: '#e2ddd8', size: 13 },
+            font: { family: "'DM Sans', system-ui, sans-serif", color: '#1a1612', size: 13 },
             margin: { l: 220, r: 40, t: 10, b: 50 },
             height: Math.max(380, sorted.length * 38),
             xaxis: {
                 range: [-2.5, 2.5],
-                gridcolor: '#1e1e30',
-                zerolinecolor: '#2a2a3e',
+                gridcolor: '#f0ede8',
+                zerolinecolor: '#d4cfc5',
                 zerolinewidth: 1,
                 tickvals: [-2, -1, 0, 1, 2],
                 ticktext: ['Strongly oppose', 'Oppose', 'Neutral', 'Support', 'Strongly support'],
-                tickfont: { color: '#7a7590', size: 11 },
+                tickfont: { color: '#a09890', size: 11 },
             },
             yaxis: {
-                tickfont: { color: '#e2ddd8', size: 12 },
+                tickfont: { color: '#1a1612', size: 12 },
                 gridwidth: 0,
             },
             shapes: [{
                 type: 'line',
                 x0: 0, x1: 0, y0: -0.5, y1: sorted.length - 0.5,
-                line: { color: '#2a2a3e', width: 1 },
+                line: { color: '#d4cfc5', width: 1 },
             }],
         }
 
@@ -101,11 +101,11 @@ export default function VotersChart({ data })
 
     return (
         <div>
-            <p style={{ fontSize: '13px', color: '#7a7590', marginBottom: '16px' }}>
+            <p style={{ fontSize: '13px', color: '#a09890', marginBottom: '16px' }}>
                 Voter group alignment — bar width reflects electoral significance
             </p>
             <div ref={containerRef} />
-            <div style={{ display: 'flex', gap: '16px', marginTop: '8px', fontSize: '12px', color: '#7a7590' }}>
+            <div style={{ display: 'flex', gap: '16px', marginTop: '8px', fontSize: '12px', color: '#a09890' }}>
                 <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                     <span style={{ display: 'inline-block', width: '18px', height: '10px', background: '#7a7590', borderRadius: '2px' }} />
                     High significance

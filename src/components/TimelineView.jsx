@@ -12,28 +12,28 @@ const S = {
         gap: '12px',
     },
     card: {
-        background: '#161625',
-        border: '1px solid #1e1e30',
+        background: '#fafaf8',
+        border: '1px solid #e8e4dc',
         borderRadius: '12px',
         padding: '16px',
         position: 'relative',
     },
     label: {
         fontSize: '11px',
-        fontWeight: 600,
+        fontWeight: 700,
         textTransform: 'uppercase',
         letterSpacing: '0.08em',
-        color: '#22d3ee',
+        color: '#f97316',
         marginBottom: '4px',
     },
     sublabel: {
         fontSize: '11px',
-        color: '#3a3a52',
+        color: '#c8c2b8',
         marginBottom: '10px',
     },
     body: {
         fontSize: '14px',
-        color: '#e2ddd8',
+        color: '#1a1612',
         lineHeight: 1.55,
     },
     connector: {
@@ -42,7 +42,7 @@ const S = {
         right: '-8px',
         width: '8px',
         height: '2px',
-        background: '#1e1e30',
+        background: '#e8e4dc',
     },
 }
 
@@ -52,7 +52,7 @@ export default function TimelineView({ data })
 
     return (
         <div>
-            <p style={{ fontSize: '13px', color: '#7a7590', marginBottom: '16px' }}>
+            <p style={{ fontSize: '13px', color: '#a09890', marginBottom: '16px' }}>
                 How this policy unfolds over time
             </p>
             <div style={S.grid}>

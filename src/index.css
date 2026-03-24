@@ -1,55 +1,27 @@
-*, *::before, *::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --bg:        #08080f;
-  --surface:   #0f0f1a;
-  --surface-2: #161625;
-  --border:    #1e1e30;
-  --border-2:  #2a2a3e;
-  --text:      #e2ddd8;
-  --text-dim:  #7a7590;
-  --text-faint:#3a3a52;
-  --accent:    #22d3ee;
-  --accent-2:  #a78bfa;
-  --positive:  #34d399;
-  --negative:  #f87171;
-  --warning:   #fbbf24;
-
-  font-family: 'DM Sans', system-ui, sans-serif;
-  font-size: 16px;
-  line-height: 1.5;
-  color: var(--text);
-  background: var(--bg);
-  -webkit-font-smoothing: antialiased;
+  --bg:      #f5f5f0;
+  --surface: #ffffff;
+  --card:    #ffffff;
+  --border:  #e8e4dc;
+  --border2: #d4cfc5;
+  --text:    #1a1612;
+  --dim:     #7a7268;
+  --faint:   #c8c2b8;
+  --orange:  #f97316;
+  --teal:    #0d9488;
+  --pos:     #0d9488;
+  --neg:     #dc2626;
+  --warn:    #d97706;
 }
 
-body {
-  min-height: 100svh;
-}
+body { background: var(--bg); font-family: 'DM Sans', system-ui, sans-serif; -webkit-font-smoothing: antialiased; min-height: 100svh; }
+#root { min-height: 100svh; display: flex; flex-direction: column; }
+button { font-family: inherit; cursor: pointer; border: none; outline: none; }
+textarea, input { font-family: inherit; outline: none; }
 
-#root {
-  min-height: 100svh;
-  display: flex;
-  flex-direction: column;
-}
-
-button {
-  font-family: inherit;
-  cursor: pointer;
-  border: none;
-  outline: none;
-}
-
-textarea, input {
-  font-family: inherit;
-  outline: none;
-}
-
-/* plotly tooltip override */
-.hoverlayer .hovertext {
-  font-family: 'DM Sans', sans-serif !important;
+textarea:focus {
+  border-color: var(--teal) !important;
+  box-shadow: 0 0 0 3px rgba(13,148,136,0.12) !important;
 }

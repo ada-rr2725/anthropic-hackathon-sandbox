@@ -24,6 +24,10 @@ Manufacturing workers, Service workers, Knowledge workers, Small business owners
 Use category field: "income" | "age" | "geography" | "occupation"
 net_effect: "benefits" | "hurts" | "neutral" | "mixed"
 
+GEOGRAPHIC IMPACTS — list the 6-10 most affected countries/regions:
+Include lat/lon (capital city coordinates), direction, magnitude 1-5, and a one-sentence mechanism.
+Only include countries with meaningful impact (magnitude >= 2).
+
 VOTING DEMOGRAPHICS — cover these groups:
 White working-class voters, College-educated suburban voters, Rural voters, Union members,
 Retirees, Young voters (18-30), Black voters, Hispanic/Latino voters, Independent swing voters, Small business owners
@@ -40,6 +44,9 @@ OUTPUT — respond with ONLY valid JSON, no markdown, no preamble:
   "key_tradeoff": "one sentence",
   "uncertainty_level": "low | medium | high",
   "historical_analogues": ["string", "string"],
+  "geographic_impacts": [
+    { "country": "string", "lat": number, "lon": number, "direction": "positive | negative | neutral", "magnitude": 1, "mechanism": "one sentence" }
+  ],
   "market_impacts": [
     { "sector": "string", "direction": "string", "magnitude": 1, "timeframe": "string", "mechanism": "one sentence", "confidence": "string" }
   ],
