@@ -279,6 +279,7 @@ export default function App()
   const [analysis, setAnalysis] = useState(null)
   const [error, setError] = useState(null)
   const [activeTab, setActiveTab] = useState('markets')
+  const [statusMsg, setStatusMsg] = useState('')
 
   // inject keyframe animation once
   useEffect(() =>
@@ -298,12 +299,19 @@ export default function App()
     setAnalysis(null)
     setError(null)
     setActiveTab('markets')
+    setStatusMsg('Identifying policy mechanisms...')
 
     try
     {
       const analysisText = await streamMessage({
         system: POLICY_ANALYSIS_PROMPT,
         userMessage: trimmed,
+        onChunk: (_, full) =>
+        {
+          if (full.includes('"voting_demographics"')) setStatusMsg('Mapping electoral implications...')
+          else if (full.includes('"demographic_impacts"')) setStatusMsg('Assessing demographic effects...')
+          else if (full.includes('"market_impacts"')) setStatusMsg('Mapping market sector exposure...')
+        },
       })
 
       const parsed = parsePolicyAnalysis(analysisText)
@@ -404,11 +412,8 @@ export default function App()
             <div style={S.policyPill}>{policy}</div>
             <div style={S.loadingRow}>
               <Spinner />
-              <span>Analysing policy...</span>
+              <span>{statusMsg}</span>
             </div>
-            <p style={S.loadingHint}>
-              Cascade is tracing economic mechanisms, demographic effects, and electoral implications across all major sectors and voter groups.
-            </p>
           </>
         )}
 
