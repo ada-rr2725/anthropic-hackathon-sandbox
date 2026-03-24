@@ -144,4 +144,4 @@ npm run lint     # run ESLint
 
 ## Licence
 
-[MIT](LICENSE) — Robin Rai & Emircan Karaca, 2025
+[MIT](LICENSE) — Robin Rai, Emircan Karaca, Kevin Wadhwa & Jia Zheng Ong, 2026
