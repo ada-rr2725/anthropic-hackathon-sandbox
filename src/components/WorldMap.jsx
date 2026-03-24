@@ -107,6 +107,60 @@ export default function WorldMap({ data, background = false })
 
         if (!data?.length) return
 
+        // ── animated arcs between impact countries (background mode only) ──
+        if (background)
+        {
+          const pts = data
+            .map(d => ({ ...d, pos: projection([d.lon, d.lat]) }))
+            .filter(d => d.pos)
+
+          // inject keyframe animations once
+          const styleId = 'csc-arc-anim'
+          if (!document.getElementById(styleId))
+          {
+            const styleEl = document.createElement('style')
+            styleEl.id = styleId
+            const rules = pts.flatMap((_, i) =>
+              pts.slice(i + 1).map((__, j) =>
+              {
+                const idx = i * pts.length + j
+                const dur = (2.8 + (idx % 6) * 0.5).toFixed(1)
+                const del = ((idx * 0.41) % parseFloat(dur)).toFixed(1)
+                return `@keyframes arc${idx}{to{stroke-dashoffset:-200}} .wmarc${idx}{animation:arc${idx} ${dur}s ${del}s linear infinite}`
+              })
+            ).join('\n')
+            styleEl.textContent = rules
+            document.head.appendChild(styleEl)
+          }
+
+          let arcIdx = 0
+          pts.forEach((a, i) =>
+          {
+            pts.slice(i + 1).forEach((b) =>
+            {
+              const [ax, ay] = a.pos
+              const [bx, by] = b.pos
+              const mx = (ax + bx) / 2
+              const my = (ay + by) / 2 - Math.hypot(bx - ax, by - ay) * 0.22
+
+              const col = a.direction === 'positive' || b.direction === 'positive'
+                ? '#0d9488' : a.direction === 'negative' || b.direction === 'negative'
+                ? '#f97316' : '#a09890'
+
+              g.append('path')
+                .attr('d', `M${ax},${ay} Q${mx},${my} ${bx},${by}`)
+                .attr('fill', 'none')
+                .attr('stroke', col)
+                .attr('stroke-width', 1.2)
+                .attr('stroke-dasharray', '5 9')
+                .attr('opacity', 0.38)
+                .attr('class', `wmarc${arcIdx}`)
+
+              arcIdx++
+            })
+          })
+        }
+
         const sorted = [...data].sort((a, b) => (b.magnitude || 1) - (a.magnitude || 1))
 
         sorted.forEach(impact =>
