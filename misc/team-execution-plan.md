@@ -443,11 +443,11 @@ Verify the output is valid JSON matching the UnderstandingResult interface.
 ## Pre-hackathon checklist
 
 ### Robin
-- [ ] Create GitHub repo with scaffold (Vite + React + Tailwind)
-- [ ] Add CLAUDE.md and hackathon-spec.md to repo
+- [X] Create GitHub repo with scaffold (Vite + React + Tailwind)
+- [X] Add CLAUDE.md and hackathon-spec.md to repo
 - [ ] Add CDN scripts for Plotly and Three.js to index.html
 - [ ] Create empty file stubs for all files in the component structure
-- [ ] Add .env.example with VITE_ANTHROPIC_API_KEY=your-key-here
+- [X] Add .env.example with VITE_ANTHROPIC_API_KEY=your-key-here
 - [ ] Test both system prompts via Claude.ai with 5+ diverse prompts
 - [ ] Share repo link and data contracts with teammates
 - [ ] Brief teammates on their roles and Claude Code prompts
