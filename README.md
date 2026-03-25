@@ -17,7 +17,7 @@
 ---
 
 <!-- demo GIF — record with: ANTHROPIC_API_KEY=sk-ant-... node scripts/record-demo.js -->
-<!-- ![Cascade demo](docs/demo.gif) -->
+![Cascade demo](docs/demo.gif)
 
 ## Features
 
