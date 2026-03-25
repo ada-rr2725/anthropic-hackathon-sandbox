@@ -1,0 +1,140 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="300" viewBox="0 0 1200 300">
+  <defs>
+    <!-- warm dark background gradient -->
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1a1612"/>
+      <stop offset="100%" stop-color="#211c17"/>
+    </linearGradient>
+
+    <!-- subtle right-side warmth -->
+    <radialGradient id="warm" cx="75%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#f97316" stop-opacity="0.07"/>
+      <stop offset="100%" stop-color="#f97316" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- orange glow filter (hub + orange nodes) -->
+    <filter id="glowO" x="-100%" y="-100%" width="300%" height="300%">
+      <feGaussianBlur stdDeviation="10" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+
+    <!-- teal glow filter -->
+    <filter id="glowT" x="-100%" y="-100%" width="300%" height="300%">
+      <feGaussianBlur stdDeviation="8" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+
+    <!-- large hub glow -->
+    <filter id="glowHub" x="-80%" y="-80%" width="260%" height="260%">
+      <feGaussianBlur stdDeviation="18" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- background -->
+  <rect width="1200" height="300" fill="url(#bg)"/>
+  <rect width="1200" height="300" fill="url(#warm)"/>
+
+  <!-- subtle topographic contour lines -->
+  <path d="M 0 80  Q 200 70  400 76  T 680 72" stroke="#ffffff" stroke-opacity="0.025" stroke-width="1" fill="none"/>
+  <path d="M 0 120 Q 200 112 400 116 T 680 112" stroke="#ffffff" stroke-opacity="0.025" stroke-width="1" fill="none"/>
+  <path d="M 0 160 Q 200 154 400 156 T 680 152" stroke="#ffffff" stroke-opacity="0.025" stroke-width="1" fill="none"/>
+  <path d="M 0 200 Q 200 196 400 196 T 680 192" stroke="#ffffff" stroke-opacity="0.025" stroke-width="1" fill="none"/>
+  <path d="M 0 240 Q 200 238 400 236 T 680 232" stroke="#ffffff" stroke-opacity="0.025" stroke-width="1" fill="none"/>
+
+  <!-- vertical divider -->
+  <line x1="670" y1="28" x2="670" y2="272" stroke="#ffffff" stroke-opacity="0.07" stroke-width="1"/>
+
+  <!-- ─────────────────────── LEFT CONTENT ─────────────────────── -->
+
+  <!-- "Powered by Claude" badge -->
+  <rect x="64" y="50" width="170" height="26" rx="13" fill="#f97316" fill-opacity="0.13" stroke="#f97316" stroke-opacity="0.40" stroke-width="1"/>
+  <circle cx="79" cy="63" r="3.5" fill="#f97316"/>
+  <text x="90" y="68" font-family="system-ui,-apple-system,'Segoe UI',sans-serif" font-size="10.5" font-weight="700" fill="#f97316" letter-spacing="0.08em">POWERED BY CLAUDE</text>
+
+  <!-- "Cascade" wordmark — large, bold -->
+  <text font-family="system-ui,-apple-system,'Segoe UI',sans-serif" font-size="88" font-weight="800" letter-spacing="-4" fill="#f5f0eb">
+    <tspan x="62" dy="155">Cas</tspan><tspan fill="#f97316">ca</tspan><tspan fill="#f5f0eb">de</tspan>
+  </text>
+
+  <!-- subtitle -->
+  <text x="65" y="188" font-family="system-ui,-apple-system,sans-serif" font-size="12.5" font-weight="500" fill="#7a7268" letter-spacing="3.5">POLICY IMPACT ANALYSIS</text>
+
+  <!-- orange accent rule -->
+  <line x1="64" y1="200" x2="230" y2="200" stroke="#f97316" stroke-opacity="0.30" stroke-width="1"/>
+
+  <!-- feature chips -->
+  <!-- Markets -->
+  <rect x="64"  y="214" width="80"  height="24" rx="6" fill="#f97316" fill-opacity="0.10" stroke="#f97316" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="104" y="230" font-family="system-ui,sans-serif" font-size="10.5" font-weight="600" fill="#f97316" text-anchor="middle" letter-spacing="0.02em">Markets</text>
+
+  <!-- Demographics -->
+  <rect x="154" y="214" width="120" height="24" rx="6" fill="#0d9488" fill-opacity="0.10" stroke="#0d9488" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="214" y="230" font-family="system-ui,sans-serif" font-size="10.5" font-weight="600" fill="#0d9488" text-anchor="middle" letter-spacing="0.02em">Demographics</text>
+
+  <!-- Voting Blocs -->
+  <rect x="284" y="214" width="108" height="24" rx="6" fill="#f97316" fill-opacity="0.10" stroke="#f97316" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="338" y="230" font-family="system-ui,sans-serif" font-size="10.5" font-weight="600" fill="#f97316" text-anchor="middle" letter-spacing="0.02em">Voting Blocs</text>
+
+  <!-- Geography -->
+  <rect x="402" y="214" width="94"  height="24" rx="6" fill="#0d9488" fill-opacity="0.10" stroke="#0d9488" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="449" y="230" font-family="system-ui,sans-serif" font-size="10.5" font-weight="600" fill="#0d9488" text-anchor="middle" letter-spacing="0.02em">Geography</text>
+
+  <!-- ─────────────────────── RIGHT: CASCADE DIAGRAM ─────────────────────── -->
+  <!--
+    Hub centre:  (940, 150)  r=44
+    Outer nodes: radius=95 from hub centre, each r=26
+      Geography  (top):    (940,  55)
+      Markets   (right):  (1035, 150)
+      People    (bottom):  (940, 245)
+      Voters    (left):    (845, 150)
+  -->
+
+  <!-- spoke lines (edge to edge) -->
+  <!-- top — teal -->
+  <line x1="940" y1="106" x2="940" y2="81"   stroke="#0d9488" stroke-width="1.5" stroke-opacity="0.55" stroke-dasharray="6 5"/>
+  <!-- right — orange -->
+  <line x1="984" y1="150" x2="1009" y2="150" stroke="#f97316" stroke-width="1.5" stroke-opacity="0.55" stroke-dasharray="6 5"/>
+  <!-- bottom — teal -->
+  <line x1="940" y1="194" x2="940" y2="219"  stroke="#0d9488" stroke-width="1.5" stroke-opacity="0.55" stroke-dasharray="6 5"/>
+  <!-- left — orange -->
+  <line x1="896" y1="150" x2="871" y2="150"  stroke="#f97316" stroke-width="1.5" stroke-opacity="0.55" stroke-dasharray="6 5"/>
+
+  <!-- outer node glow blobs -->
+  <circle cx="940"  cy="55"  r="26" fill="#0d9488" fill-opacity="0.18" filter="url(#glowT)"/>
+  <circle cx="1035" cy="150" r="26" fill="#f97316" fill-opacity="0.18" filter="url(#glowO)"/>
+  <circle cx="940"  cy="245" r="26" fill="#0d9488" fill-opacity="0.18" filter="url(#glowT)"/>
+  <circle cx="845"  cy="150" r="26" fill="#f97316" fill-opacity="0.18" filter="url(#glowO)"/>
+
+  <!-- outer nodes -->
+  <!-- Geography (top, teal) -->
+  <circle cx="940" cy="55" r="26" fill="#0d9488" fill-opacity="0.13" stroke="#0d9488" stroke-width="1.5"/>
+  <text x="940" y="50" font-size="15" text-anchor="middle" font-family="system-ui,sans-serif">🌍</text>
+  <text x="940" y="65" font-family="system-ui,sans-serif" font-size="8.5" font-weight="700" fill="#0d9488" text-anchor="middle" letter-spacing="0.05em">GEO</text>
+
+  <!-- Markets (right, orange) -->
+  <circle cx="1035" cy="150" r="26" fill="#f97316" fill-opacity="0.13" stroke="#f97316" stroke-width="1.5"/>
+  <text x="1035" y="145" font-size="15" text-anchor="middle" font-family="system-ui,sans-serif">📈</text>
+  <text x="1035" y="160" font-family="system-ui,sans-serif" font-size="8.5" font-weight="700" fill="#f97316" text-anchor="middle" letter-spacing="0.05em">MKTS</text>
+
+  <!-- People (bottom, teal) -->
+  <circle cx="940" cy="245" r="26" fill="#0d9488" fill-opacity="0.13" stroke="#0d9488" stroke-width="1.5"/>
+  <text x="940" y="240" font-size="15" text-anchor="middle" font-family="system-ui,sans-serif">👥</text>
+  <text x="940" y="255" font-family="system-ui,sans-serif" font-size="8.5" font-weight="700" fill="#0d9488" text-anchor="middle" letter-spacing="0.05em">DEMO</text>
+
+  <!-- Voters (left, orange) -->
+  <circle cx="845" cy="150" r="26" fill="#f97316" fill-opacity="0.13" stroke="#f97316" stroke-width="1.5"/>
+  <text x="845" y="145" font-size="15" text-anchor="middle" font-family="system-ui,sans-serif">🗳</text>
+  <text x="845" y="160" font-family="system-ui,sans-serif" font-size="8.5" font-weight="700" fill="#f97316" text-anchor="middle" letter-spacing="0.05em">VOTE</text>
+
+  <!-- hub glow -->
+  <circle cx="940" cy="150" r="44" fill="#f97316" fill-opacity="0.10" filter="url(#glowHub)"/>
+
+  <!-- hub ring -->
+  <circle cx="940" cy="150" r="44" fill="#f97316" fill-opacity="0.08" stroke="#f97316" stroke-width="2"/>
+
+  <!-- hub text -->
+  <text x="940" y="145" font-family="system-ui,-apple-system,sans-serif" font-size="9.5" font-weight="700" fill="#f97316" text-anchor="middle" letter-spacing="0.08em">CASCADE</text>
+  <text x="940" y="159" font-family="system-ui,-apple-system,sans-serif" font-size="8" font-weight="400" fill="#a09890" text-anchor="middle" letter-spacing="0.04em">policy analysis</text>
+
+</svg>

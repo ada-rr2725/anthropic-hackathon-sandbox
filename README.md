@@ -1,12 +1,5 @@
 <p align="center">
-  <img src="public/favicon.svg" alt="Cascade logo" width="72" height="72" />
-</p>
-
-<h1 align="center">Cascade</h1>
-
-<p align="center">
-  Policy impact analysis, powered by Claude.<br/>
-  Describe any policy in plain English and get structured, interactive analysis across markets, demographics, voting blocs, and geography — in seconds.
+  <img src="public/banner.svg" alt="Cascade — Policy Impact Analysis" width="100%"/>
 </p>
 
 <p align="center">
@@ -23,8 +16,8 @@
 
 ---
 
-<!-- Add a screenshot or GIF of the app here once deployed -->
-<!-- ![Cascade demo](docs/demo.gif) -->
+<!-- demo GIF — record with: ANTHROPIC_API_KEY=sk-ant-... node scripts/record-demo.js -->
+![Cascade demo](docs/demo.gif)
 
 ## Features
 
@@ -133,6 +126,21 @@ src/
     └── understanding.js     # Policy analysis system prompt + JSON schema
 ```
 
+## Deployment
+
+Cascade is a pure frontend app — deploy it anywhere that serves static files.
+
+**Vercel (recommended)**
+
+```bash
+npm install -g vercel
+vercel
+```
+
+No environment variables are required. On first load, users are prompted to enter their own Anthropic API key; it is stored in `localStorage` and never leaves their browser.
+
+If you prefer to supply a shared key, set `VITE_ANTHROPIC_API_KEY` in your Vercel project settings — the key gate will be skipped for all users.
+
 ## Development
 
 ```bash
@@ -141,6 +149,21 @@ npm run build    # production build
 npm run preview  # preview production build locally
 npm run lint     # run ESLint
 ```
+
+### Recording the demo GIF
+
+A Playwright script in `scripts/record-demo.js` automates the full demo walkthrough and saves a `.webm` video.
+
+```bash
+# one-time setup
+npm install --save-dev playwright
+npx playwright install chromium
+
+# record (make sure npm run dev is running first)
+ANTHROPIC_API_KEY=sk-ant-... node scripts/record-demo.js
+```
+
+Convert the output to GIF via [ezgif.com](https://ezgif.com/video-to-gif) or ffmpeg, then save to `docs/demo.gif` and uncomment the image tag near the top of this README.
 
 ## Licence
 
