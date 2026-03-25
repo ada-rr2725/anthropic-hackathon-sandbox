@@ -42,6 +42,13 @@ const ANIM = `
   .panel-scroll::-webkit-scrollbar { width: 4px; }
   .panel-scroll::-webkit-scrollbar-track { background: transparent; }
   .panel-scroll::-webkit-scrollbar-thumb { background: #e8e4dc; border-radius: 2px; }
+  .examples-pills { display:flex; flex-wrap:wrap; gap:8px; }
+  .mobile-stats   { display:flex; align-items:stretch; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
+  .mobile-stats::-webkit-scrollbar { display:none; }
+  @media (max-width:767px) {
+    .examples-pills { flex-wrap:nowrap; overflow-x:auto; -webkit-overflow-scrolling:touch; padding-bottom:4px; scrollbar-width:none; }
+    .examples-pills::-webkit-scrollbar { display:none; }
+  }
 `
 
 // which spokes are active based on status message
@@ -82,6 +89,8 @@ export default function App()
   const [statusMsg, setStatusMsg]       = useState('')
   const [leftOpen, setLeftOpen]         = useState(true)
   const [rightOpen, setRightOpen]       = useState(true)
+  const [isMobile, setIsMobile]         = useState(() => window.innerWidth < 768)
+  const [mobileTab, setMobileTab]       = useState('analysis')
 
   useEffect(() =>
   {
@@ -89,6 +98,13 @@ export default function App()
     s.textContent = ANIM
     document.head.appendChild(s)
     return () => document.head.removeChild(s)
+  }, [])
+
+  useEffect(() =>
+  {
+    const handler = () => setIsMobile(window.innerWidth < 768)
+    window.addEventListener('resize', handler)
+    return () => window.removeEventListener('resize', handler)
   }, [])
 
   async function handleSubmit()
@@ -156,9 +172,11 @@ export default function App()
           <span style={{ fontSize: '22px', fontWeight: 800, letterSpacing: '-0.05em', color: '#1a1612' }}>
             Cas<span style={{ color: '#f97316' }}>ca</span>de
           </span>
-          <span style={{ fontSize: '12px', color: '#a09890', letterSpacing: '0.06em', textTransform: 'uppercase', fontWeight: 500 }}>
-            Policy Impact Analysis
-          </span>
+          {!isMobile && (
+            <span style={{ fontSize: '12px', color: '#a09890', letterSpacing: '0.06em', textTransform: 'uppercase', fontWeight: 500 }}>
+              Policy Impact Analysis
+            </span>
+          )}
         </div>
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
           {phase === 'done' && (
@@ -183,25 +201,32 @@ export default function App()
       {(phase === 'idle' || phase === 'error') && (
         <div style={{ flex: 1, position: 'relative', background: '#f5f5f0' }}>
           <BackgroundMap />
-          <div style={{ position: 'relative', zIndex: 1, maxWidth: '680px', margin: '0 auto', padding: '72px 36px 80px' }}>
+          <div style={{ position: 'relative', zIndex: 1, maxWidth: '680px', margin: '0 auto', padding: isMobile ? '36px 20px 60px' : '72px 36px 80px' }}>
 
             {/* hero */}
-            <div style={{ marginBottom: '44px' }}>
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: '#fff7ed', border: '1px solid #fed7aa', borderRadius: '100px', padding: '5px 14px', fontSize: '12px', color: '#f97316', fontWeight: 600, marginBottom: '20px', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+            <div style={{ marginBottom: isMobile ? '28px' : '44px' }}>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: '#fff7ed', border: '1px solid #fed7aa', borderRadius: '100px', padding: '5px 14px', fontSize: '12px', color: '#f97316', fontWeight: 600, marginBottom: '16px', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
                 <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#f97316', animation: 'csc-pulse 2s infinite', flexShrink: 0 }} />
                 Powered by Claude AI
               </div>
-              <h1 style={{ fontSize: '52px', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1.08, marginBottom: '16px', color: '#1a1612' }}>
+              <h1 style={{ fontSize: isMobile ? '34px' : '52px', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1.1, marginBottom: '12px', color: '#1a1612' }}>
                 What policy do you<br />
                 <span style={{ color: '#f97316' }}>want to analyse?</span>
               </h1>
-              <p style={{ fontSize: '17px', color: '#7a7268', lineHeight: 1.65, maxWidth: '520px' }}>
-                Describe any law, regulation, or social action. Cascade traces ripple effects across global markets, demographics, and voting blocs — instantly.
-              </p>
+              {!isMobile && (
+                <p style={{ fontSize: '17px', color: '#7a7268', lineHeight: 1.65, maxWidth: '520px' }}>
+                  Describe any law, regulation, or social action. Cascade traces ripple effects across global markets, demographics, and voting blocs — instantly.
+                </p>
+              )}
+              {isMobile && (
+                <p style={{ fontSize: '15px', color: '#7a7268', lineHeight: 1.55, margin: 0 }}>
+                  Describe any law or regulation. Cascade traces the ripple effects instantly.
+                </p>
+              )}
             </div>
 
             {/* input card */}
-            <div style={{ ...GLASS, padding: '28px', marginBottom: '24px' }}>
+            <div style={{ ...GLASS, padding: isMobile ? '20px' : '28px', marginBottom: '20px' }}>
               <textarea
                 value={policy}
                 onChange={e => setPolicy(e.target.value)}
@@ -212,12 +237,12 @@ export default function App()
                   width: '100%', background: '#fafaf8', border: '1.5px solid #e8e4dc',
                   borderRadius: '12px', color: '#1a1612', fontSize: '16px',
                   lineHeight: 1.6, padding: '14px 18px', resize: 'vertical',
-                  minHeight: '90px', marginBottom: '16px', transition: 'border-color 0.2s, box-shadow 0.2s',
-                  fontFamily: 'inherit',
+                  minHeight: '90px', marginBottom: '14px', transition: 'border-color 0.2s, box-shadow 0.2s',
+                  fontFamily: 'inherit', boxSizing: 'border-box',
                 }}
               />
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
-                <span style={{ fontSize: '12px', color: '#c8c2b8' }}>⌘ + Enter to submit</span>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: isMobile ? 'center' : 'space-between', flexWrap: 'wrap', gap: '10px' }}>
+                {!isMobile && <span style={{ fontSize: '12px', color: '#c8c2b8' }}>⌘ + Enter to submit</span>}
                 <button
                   className="submit-btn"
                   onClick={handleSubmit}
@@ -225,7 +250,9 @@ export default function App()
                   style={{
                     background: policy.trim() ? 'linear-gradient(135deg, #f97316, #ea580c)' : '#e8e4dc',
                     color: policy.trim() ? '#fff' : '#a09890',
-                    border: 'none', borderRadius: '12px', padding: '13px 32px',
+                    border: 'none', borderRadius: '12px',
+                    padding: isMobile ? '15px' : '13px 32px',
+                    width: isMobile ? '100%' : 'auto',
                     fontSize: '15px', fontWeight: 700, letterSpacing: '-0.01em',
                     cursor: policy.trim() ? 'pointer' : 'not-allowed',
                     boxShadow: policy.trim() ? '0 4px 20px rgba(249,115,22,0.35)' : 'none',
@@ -239,13 +266,14 @@ export default function App()
 
             {/* examples */}
             <div>
-              <p style={{ fontSize: '11px', color: '#c8c2b8', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 600, marginBottom: '12px' }}>Try an example</p>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+              <p style={{ fontSize: '11px', color: '#c8c2b8', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 600, marginBottom: '10px' }}>Try an example</p>
+              <div className="examples-pills">
                 {EXAMPLES.map(ex => (
                   <button key={ex} className="pill-btn" onClick={() => setPolicy(ex)} style={{
                     background: 'rgba(255,255,255,0.85)', border: '1px solid #e8e4dc', borderRadius: '100px',
                     color: '#7a7268', fontSize: '13px', padding: '7px 16px', cursor: 'pointer',
                     transition: 'all 0.15s', fontFamily: 'inherit', backdropFilter: 'blur(8px)',
+                    flexShrink: 0,
                   }}>
                     {ex}
                   </button>
@@ -254,7 +282,7 @@ export default function App()
             </div>
 
             {phase === 'error' && error && (
-              <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '12px', padding: '16px 20px', color: '#dc2626', fontSize: '14px', marginTop: '24px' }}>
+              <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '12px', padding: '16px 20px', color: '#dc2626', fontSize: '14px', marginTop: '20px' }}>
                 <strong>Error:</strong> {error}
               </div>
             )}
@@ -266,6 +294,7 @@ export default function App()
       {phase === 'analyzing' && (() => {
         const active = spokesFromStatus(statusMsg)
         const cx = 200, cy = 200, r = 120
+        const svgSize = isMobile ? Math.min(300, window.innerWidth - 48) : 400
         const spokes = [
           { id: 'geo',     label: 'Geography',  angle: -90,  icon: '🌍', col: '#0d9488' },
           { id: 'markets', label: 'Markets',     angle: 0,    icon: '📈', col: '#f97316' },
@@ -273,10 +302,10 @@ export default function App()
           { id: 'voters',  label: 'Voters',      angle: 180,  icon: '🗳', col: '#f97316' },
         ]
         return (
-          <div style={{ flex: 1, background: '#f5f5f0', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '32px', padding: '40px' }}>
+          <div style={{ flex: 1, background: '#f5f5f0', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: isMobile ? '20px' : '32px', padding: isMobile ? '24px 16px' : '40px' }}>
 
             {/* radial diagram */}
-            <svg width={400} height={400} viewBox="0 0 400 400" style={{ overflow: 'visible' }}>
+            <svg width={svgSize} height={svgSize} viewBox="0 0 400 400" style={{ overflow: 'visible' }}>
               <defs>
                 <radialGradient id="centreGrad" cx="50%" cy="50%" r="50%">
                   <stop offset="0%" stopColor="#fff7ed" />
@@ -358,7 +387,7 @@ export default function App()
             </div>
 
             {/* progress pills */}
-            <div style={{ display: 'flex', gap: '8px' }}>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'center' }}>
               {spokes.map(({ id, label, col }) => {
                 const on = active.includes(id)
                 return (
@@ -379,8 +408,151 @@ export default function App()
         )
       })()}
 
-      {/* ── results: map background + floating panels ── */}
-      {phase === 'done' && analysis && (
+      {/* ── results: mobile stacked layout ── */}
+      {phase === 'done' && analysis && isMobile && (() => {
+        const geo     = analysis.geographic_impacts || []
+        const markets = analysis.market_impacts     || []
+        const pos     = markets.filter(m => m.direction === 'positive').length
+        const neg     = markets.filter(m => m.direction === 'negative').length
+        const topHit  = [...markets].sort((a, b) => (b.magnitude||0) - (a.magnitude||0))[0]
+        const ucColor = analysis.uncertainty_level === 'high' ? '#dc2626' : analysis.uncertainty_level === 'medium' ? '#d97706' : '#0d9488'
+        const mStats = [
+          { label: 'Countries',  value: geo.length,                        color: '#f97316' },
+          { label: '↑ Markets',  value: pos,                               color: '#0d9488' },
+          { label: '↓ Markets',  value: neg,                               color: '#dc2626' },
+          { label: 'Top sector', value: topHit?.sector ?? '—',             color: '#f97316' },
+          { label: 'Confidence', value: analysis.uncertainty_level ?? '—', color: ucColor   },
+        ]
+        return (
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: '#f5f5f0', overflow: 'hidden' }}>
+
+            {/* map strip */}
+            <div style={{ height: '38vh', flexShrink: 0, position: 'relative', overflow: 'hidden', borderBottom: '1px solid #e8e4dc' }}>
+              <WorldMap data={analysis.geographic_impacts} background />
+            </div>
+
+            {/* stats strip */}
+            <div className="mobile-stats" style={{ flexShrink: 0, background: 'rgba(255,255,255,0.97)', borderBottom: '1px solid #e8e4dc', padding: '0 4px' }}>
+              {mStats.map(({ label, value, color }, i) => (
+                <div key={label} style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+                  <div style={{ textAlign: 'center', padding: '10px 14px' }}>
+                    <div style={{ fontSize: '15px', fontWeight: 800, letterSpacing: '-0.02em', color, lineHeight: 1.1 }}>{value}</div>
+                    <div style={{ fontSize: '9px', color: '#a09890', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.06em', marginTop: '2px' }}>{label}</div>
+                  </div>
+                  {i < mStats.length - 1 && <div style={{ width: '1px', background: '#f0ece6', alignSelf: 'stretch', margin: '8px 0', flexShrink: 0 }} />}
+                </div>
+              ))}
+            </div>
+
+            {/* main tab bar */}
+            <div style={{ display: 'flex', background: 'rgba(255,255,255,0.97)', borderBottom: '1px solid #e8e4dc', flexShrink: 0 }}>
+              {[{ id: 'analysis', label: 'Analysis' }, { id: 'charts', label: 'Charts' }].map(t => (
+                <button key={t.id} onClick={() => setMobileTab(t.id)} style={{
+                  flex: 1, padding: '13px', fontSize: '14px', fontWeight: 700,
+                  background: 'none', border: 'none', borderBottom: mobileTab === t.id ? '2.5px solid #f97316' : '2.5px solid transparent',
+                  color: mobileTab === t.id ? '#f97316' : '#a09890',
+                  cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s',
+                }}>
+                  {t.label}
+                </button>
+              ))}
+            </div>
+
+            {/* content area */}
+            <div className="panel-scroll" style={{ flex: 1, overflowY: 'auto', background: '#fafaf8' }}>
+
+              {/* analysis tab */}
+              {mobileTab === 'analysis' && (
+                <div style={{ padding: '0 0 32px' }}>
+                  <div style={{ padding: '16px 20px', borderBottom: '1px solid #f0ece6' }}>
+                    <div style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.09em', color: '#c8c2b8', marginBottom: '6px' }}>Policy</div>
+                    <div style={{ fontSize: '13px', color: '#3a3430', lineHeight: 1.5, fontStyle: 'italic' }}>"{policy}"</div>
+                  </div>
+                  <div style={{ padding: '16px 20px', borderBottom: '1px solid #f0ece6', background: '#fffcf9' }}>
+                    <div style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.09em', color: '#c8c2b8', marginBottom: '8px' }}>Key Takeaway</div>
+                    <p style={{ fontSize: '15px', fontWeight: 700, letterSpacing: '-0.02em', lineHeight: 1.45, color: '#1a1612', margin: 0 }}>{analysis.core_insight}</p>
+                  </div>
+                  <div style={{ padding: '14px 20px', borderBottom: '1px solid #f0ece6', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    <div style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.09em', color: '#c8c2b8', width: '100%', marginBottom: '4px' }}>Classification</div>
+                    {analysis.policy_type && (
+                      <span style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', padding: '4px 12px', borderRadius: '20px', background: '#fff7ed', color: '#f97316', border: '1px solid #fed7aa' }}>
+                        {analysis.policy_type.replace(/_/g, ' ')}
+                      </span>
+                    )}
+                    {analysis.uncertainty_level && (
+                      <span style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', padding: '4px 12px', borderRadius: '20px', color: ucColor, border: `1px solid ${ucColor}55`, background: ucColor + '12' }}>
+                        {analysis.uncertainty_level === 'high' ? '⚠ High' : analysis.uncertainty_level === 'medium' ? '~ Medium' : '✓ Low'} Uncertainty
+                      </span>
+                    )}
+                  </div>
+                  {analysis.summary && (
+                    <div style={{ padding: '16px 20px', borderBottom: '1px solid #f0ece6' }}>
+                      <div style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.09em', color: '#c8c2b8', marginBottom: '8px' }}>What It Does</div>
+                      <p style={{ fontSize: '13px', color: '#4a4440', lineHeight: 1.7, margin: 0 }}>{analysis.summary}</p>
+                    </div>
+                  )}
+                  {analysis.key_tradeoff && (
+                    <div style={{ padding: '14px 20px', borderBottom: '1px solid #f0ece6' }}>
+                      <div style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.09em', color: '#c8c2b8', marginBottom: '8px' }}>Core Tradeoff</div>
+                      <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
+                        <span style={{ fontSize: '16px', flexShrink: 0, marginTop: '1px' }}>⚖</span>
+                        <p style={{ fontSize: '13px', color: '#92400e', lineHeight: 1.6, margin: 0, background: '#fffbf5', border: '1px solid #fde68a', borderRadius: '8px', padding: '8px 12px' }}>{analysis.key_tradeoff}</p>
+                      </div>
+                    </div>
+                  )}
+                  {analysis.historical_analogues?.length > 0 && (
+                    <div style={{ padding: '14px 20px', borderBottom: '1px solid #f0ece6' }}>
+                      <div style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.09em', color: '#c8c2b8', marginBottom: '10px' }}>Historical Precedents</div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        {analysis.historical_analogues.map((a, i) => (
+                          <div key={i} style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+                            <span style={{ color: '#0d9488', fontWeight: 700, fontSize: '12px', flexShrink: 0, marginTop: '2px' }}>#{i + 1}</span>
+                            <span style={{ fontSize: '12.5px', color: '#5a5450', lineHeight: 1.5 }}>{a}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  <div style={{ padding: '16px 20px' }}>
+                    <div style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.09em', color: '#c8c2b8', marginBottom: '14px' }}>Impact Cascade</div>
+                    <CascadeGraph analysis={analysis} />
+                  </div>
+                </div>
+              )}
+
+              {/* charts tab */}
+              {mobileTab === 'charts' && (
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  {/* chart sub-tab bar */}
+                  <div style={{ display: 'flex', gap: '2px', padding: '10px 14px 0', borderBottom: '1px solid #f0ece6', background: '#fff', position: 'sticky', top: 0, zIndex: 5, flexShrink: 0 }}>
+                    {CHART_TABS.map(t => (
+                      <button key={t.id} className="chart-tab" onClick={() => setActiveTab(t.id)} style={{
+                        flex: 1, padding: '9px 4px', fontSize: '12px', fontWeight: 600,
+                        borderRadius: '8px 8px 0 0', background: activeTab === t.id ? '#fff7ed' : 'transparent',
+                        color: activeTab === t.id ? '#f97316' : '#a09890', border: 'none',
+                        borderBottom: activeTab === t.id ? '2px solid #f97316' : '2px solid transparent',
+                        marginBottom: '-1px', cursor: 'pointer', transition: 'all 0.15s', fontFamily: 'inherit',
+                      }}>
+                        {t.label}
+                      </button>
+                    ))}
+                  </div>
+                  <div style={{ padding: '20px' }}>
+                    {activeTab === 'markets'  && <MarketsChart data={analysis.market_impacts} />}
+                    {activeTab === 'people'   && <PeopleChart  data={analysis.demographic_impacts} />}
+                    {activeTab === 'voters'   && <VotersChart  data={analysis.voting_demographics} />}
+                    {activeTab === 'timeline' && <TimelineView data={analysis.timeline} />}
+                  </div>
+                </div>
+              )}
+
+            </div>
+          </div>
+        )
+      })()}
+
+      {/* ── results: desktop — map background + floating panels ── */}
+      {phase === 'done' && analysis && !isMobile && (
         <div style={{ flex: 1, position: 'relative', overflow: 'hidden', minHeight: 'calc(100svh - 60px)' }}>
 
           {/* full-screen world map background */}
