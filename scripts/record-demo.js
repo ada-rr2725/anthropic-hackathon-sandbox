@@ -20,105 +20,91 @@
  *     docs/demo.gif
  */
 
-const { chromium } = require('playwright')
+import { chromium } from 'playwright'
 
-const APP_URL   = process.env.APP_URL   || 'http://localhost:5173'
-const API_KEY   = process.env.ANTHROPIC_API_KEY || ''
-const OUT_DIR   = 'demo'
-const POLICY    = 'The US imposes a 25% blanket tariff on all Chinese imports'
+const APP_URL = process.env.APP_URL || 'http://localhost:5173'
+const API_KEY = process.env.ANTHROPIC_API_KEY || ''
+const OUT_DIR = 'demo'
+const POLICY  = 'The US imposes a 25% blanket tariff on all Chinese imports'
 
 // milliseconds — tune to your machine speed
 const DELAYS = {
-  afterLoad:    1200,
+  afterLoad:   1200,
   afterKeySet:  800,
   afterType:    600,
   afterSubmit:  500,
-  perTab:       3000,
-  finalPause:   2000,
+  perTab:      3000,
+  finalPause:  2000,
 }
 
-async function wait(ms) { return new Promise(r => setTimeout(r, ms)) }
+const wait = ms => new Promise(r => setTimeout(r, ms))
 
-;(async () =>
+if (!API_KEY)
 {
-  if (!API_KEY)
-  {
-    console.error('Error: set ANTHROPIC_API_KEY environment variable before running.')
-    process.exit(1)
-  }
+  console.error('Error: set ANTHROPIC_API_KEY environment variable before running.')
+  process.exit(1)
+}
 
-  const browser = await chromium.launch({
-    headless: false,
-    args: ['--window-size=1280,800'],
-  })
+const browser = await chromium.launch({
+  headless: false,
+  args: ['--window-size=1280,800'],
+})
 
-  const context = await browser.newContext({
-    viewport: { width: 1280, height: 800 },
-    recordVideo: {
-      dir: OUT_DIR,
-      size: { width: 1280, height: 800 },
-    },
-  })
+const context = await browser.newContext({
+  viewport: { width: 1280, height: 800 },
+  recordVideo: {
+    dir: OUT_DIR,
+    size: { width: 1280, height: 800 },
+  },
+})
 
-  const page = await context.newPage()
+const page = await context.newPage()
 
-  console.log('→ opening app...')
-  await page.goto(APP_URL)
-  await wait(DELAYS.afterLoad)
+console.log('→ opening app...')
+await page.goto(APP_URL)
+await wait(DELAYS.afterLoad)
 
-  // inject api key into localstorage and reload so the gate is bypassed
-  console.log('→ setting api key...')
-  await page.evaluate(key =>
-  {
-    localStorage.setItem('cascade_api_key', key)
-  }, API_KEY)
+// inject api key into localstorage and reload so the gate is bypassed
+console.log('→ setting api key...')
+await page.evaluate(key => { localStorage.setItem('cascade_api_key', key) }, API_KEY)
+await page.reload({ waitUntil: 'networkidle' })
+await wait(DELAYS.afterKeySet)
 
-  await page.reload({ waitUntil: 'networkidle' })
-  await wait(DELAYS.afterKeySet)
+// type the policy into the textarea character by character for a natural feel
+console.log('→ typing policy...')
+const textarea = page.locator('textarea').first()
+await textarea.click()
+for (const char of POLICY)
+{
+  await textarea.type(char)
+  await wait(30 + Math.random() * 40)
+}
+await wait(DELAYS.afterType)
 
-  // type the policy into the textarea
-  console.log('→ typing policy...')
-  const textarea = page.locator('textarea').first()
-  await textarea.click()
+// submit
+console.log('→ submitting...')
+await page.locator('button:has-text("Analyse Policy")').click()
+await wait(DELAYS.afterSubmit)
 
-  // type character by character for a natural feel
-  for (const char of POLICY)
-  {
-    await textarea.type(char)
-    await wait(30 + Math.random() * 40)
-  }
+// wait for analysis to finish (up to 90 seconds)
+console.log('→ waiting for results...')
+await page.waitForSelector('button:has-text("← New policy")', { timeout: 90_000 })
+console.log('→ results loaded.')
+await wait(1500)
 
-  await wait(DELAYS.afterType)
+// cycle through chart tabs
+for (const tab of ['Markets', 'People', 'Voters', 'Timeline'])
+{
+  console.log(`→ tab: ${tab}`)
+  await page.locator(`button:has-text("${tab}")`).last().click()
+  await wait(DELAYS.perTab)
+}
 
-  // submit
-  console.log('→ submitting...')
-  const submitBtn = page.locator('button:has-text("Analyse Policy")')
-  await submitBtn.click()
-  await wait(DELAYS.afterSubmit)
+await wait(DELAYS.finalPause)
 
-  // wait for analysis to finish (up to 90 seconds)
-  console.log('→ waiting for results...')
-  await page.waitForSelector('button:has-text("← New policy")', { timeout: 90_000 })
-  console.log('→ results loaded.')
-  await wait(1500)
+console.log('→ done. closing browser...')
+await context.close()
+await browser.close()
 
-  // cycle through chart tabs
-  const tabs = ['Markets', 'People', 'Voters', 'Timeline']
-  for (const tab of tabs)
-  {
-    console.log(`→ tab: ${tab}`)
-    const tabBtn = page.locator(`button:has-text("${tab}")`).last()
-    await tabBtn.click()
-    await wait(DELAYS.perTab)
-  }
-
-  // show the map with panels for a final beat
-  await wait(DELAYS.finalPause)
-
-  console.log('→ done. closing browser...')
-  await context.close()
-  await browser.close()
-
-  console.log(`\nVideo saved to: ${OUT_DIR}/`)
-  console.log('Convert to GIF using ezgif.com or ffmpeg (see script header).')
-})()
+console.log(`\nVideo saved to: ${OUT_DIR}/`)
+console.log('Convert to GIF using ezgif.com or ffmpeg (see script header).')
