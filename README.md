@@ -14,6 +14,8 @@
 
 > **Built at the Claude Hackathon @ Imperial College London.**
 
+Web link:
+[https://cascade-xi.vercel.app/](https://cascade-xi.vercel.app/)
 ---
 
 <!-- demo GIF — record with: ANTHROPIC_API_KEY=sk-ant-... node scripts/record-demo.js -->
@@ -126,21 +128,6 @@ src/
     └── understanding.js     # Policy analysis system prompt + JSON schema
 ```
 
-## Deployment
-
-Cascade is a pure frontend app — deploy it anywhere that serves static files.
-
-**Vercel (recommended)**
-
-```bash
-npm install -g vercel
-vercel
-```
-
-No environment variables are required. On first load, users are prompted to enter their own Anthropic API key; it is stored in `localStorage` and never leaves their browser.
-
-If you prefer to supply a shared key, set `VITE_ANTHROPIC_API_KEY` in your Vercel project settings — the key gate will be skipped for all users.
-
 ## Development
 
 ```bash
@@ -167,4 +154,4 @@ Convert the output to GIF via [ezgif.com](https://ezgif.com/video-to-gif) or ffm
 
 ## Licence
 
-[MIT](LICENSE) — Robin Rai & Emircan Karaca, 2025
+[MIT](LICENSE) — Robin Rai, Emircan Karaca, Kevin Wadhwa & Jia Zheng Ong, 2026
