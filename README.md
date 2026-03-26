@@ -137,21 +137,6 @@ npm run preview  # preview production build locally
 npm run lint     # run ESLint
 ```
 
-### Recording the demo GIF
-
-A Playwright script in `scripts/record-demo.js` automates the full demo walkthrough and saves a `.webm` video.
-
-```bash
-# one-time setup
-npm install --save-dev playwright
-npx playwright install chromium
-
-# record (make sure npm run dev is running first)
-ANTHROPIC_API_KEY=sk-ant-... node scripts/record-demo.js
-```
-
-Convert the output to GIF via [ezgif.com](https://ezgif.com/video-to-gif) or ffmpeg, then save to `docs/demo.gif` and uncomment the image tag near the top of this README.
-
 ## Licence
 
 [MIT](LICENSE) — Robin Rai, Emircan Karaca, Kevin Wadhwa & Jia Zheng Ong, 2026
